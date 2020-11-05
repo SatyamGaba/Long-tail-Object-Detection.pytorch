@@ -198,7 +198,10 @@ def main():
             for key in ['interval', 'tmpdir', 'start', 'gpu_collect']:
                 eval_kwargs.pop(key, None)
             eval_kwargs.update(dict(metric=args.eval, **kwargs))
-            eval_kwargs.update(dict(classwise=True))
+            ### manually added // Satyam Gaba
+#             eval_kwargs.update(dict(classwise=True))
+#             eval_kwargs.update(dict(imagewise=True))
+
             print(dataset.evaluate(outputs, **eval_kwargs))
 
 
