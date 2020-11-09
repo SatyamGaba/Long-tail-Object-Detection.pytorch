@@ -7,7 +7,8 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
+        frozen_stages=4,
+#         norm_cfg=dict(type='BN', requires_grad=False),
         style='pytorch'),
     neck=dict(
         type='FPN',
@@ -18,32 +19,39 @@ model = dict(
         type='RPNHead',
         in_channels=256,
         feat_channels=256,
-        anchor_scales=[8],
-        anchor_ratios=[0.5, 1.0, 2.0],
-        anchor_strides=[4, 8, 16, 32, 64],
-        target_means=[.0, .0, .0, .0],
-        target_stds=[1.0, 1.0, 1.0, 1.0],
+        anchor_generator=dict(
+            type='AnchorGenerator',
+            scales=[8],
+            ratios=[0.5, 1.0, 2.0],
+            strides=[4, 8, 16, 32, 64]),
+        bbox_coder=dict(
+            type='DeltaXYWHBBoxCoder',
+            target_means=[.0, .0, .0, .0],
+            target_stds=[1.0, 1.0, 1.0, 1.0]),
         loss_cls=dict(
             type='CrossEntropyLoss', use_sigmoid=True, loss_weight=1.0),
         loss_bbox=dict(type='SmoothL1Loss', beta=1.0 / 9.0, loss_weight=1.0)),
-    bbox_roi_extractor=dict(
-        type='SingleRoIExtractor',
-        roi_layer=dict(type='RoIAlign', out_size=7, sample_num=2),
-        out_channels=256,
-        featmap_strides=[4, 8, 16, 32]),
-    bbox_head=dict(
-        type='SharedFCBBoxHead',
-        num_fcs=2,
-        in_channels=256,
-        fc_out_channels=1024,
-        roi_feat_size=7,
-        num_classes=1231,
-        target_means=[0., 0., 0., 0.],
-        target_stds=[0.1, 0.1, 0.2, 0.2],
-        reg_class_agnostic=False,
-        loss_cls=dict(
-            type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-        loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0)))
+    roi_head=dict(
+        type='StandardRoIHead',
+        bbox_roi_extractor=dict(
+            type='SingleRoIExtractor',
+            roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=2),
+            out_channels=256,
+            featmap_strides=[4, 8, 16, 32]),
+        bbox_head=dict(
+            type='Shared2FCBBoxHead',
+            in_channels=256,
+            fc_out_channels=1024,
+            roi_feat_size=7,
+            num_classes=1203,
+            bbox_coder=dict(
+                type='DeltaXYWHBBoxCoder',
+                target_means=[0., 0., 0., 0.],
+                target_stds=[0.1, 0.1, 0.2, 0.2]),
+            reg_class_agnostic=False,
+            loss_cls=dict(
+                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+            loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))))
 # model training and testing settings
 train_cfg = dict(
     rpn=dict(
@@ -100,14 +108,14 @@ test_cfg = dict(
             min_pos_iou=0.5,
             ignore_iof_thr=-1),
         score_thr=0.0,
-        nms=dict(type='nms', iou_thr=0.5),
+        nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=300)
     # soft-nms is also supported for rcnn testing
     # e.g., nms=dict(type='soft_nms', iou_thr=0.5, min_score=0.05)
 )
 # dataset settings
-dataset_type = 'LvisDataset'
-data_root = 'data/lvis/'
+dataset_type = 'LVISV1Dataset'
+data_root = 'data/lvis_v1/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -136,22 +144,22 @@ test_pipeline = [
         ])
 ]
 data = dict(
-    imgs_per_gpu=2,
+    samples_per_gpu=2,
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'lvis_v0.5_train.json',
-        img_prefix=data_root + 'train2017/',
+        ann_file=data_root + 'annotations/lvis_v1_train.json',
+        img_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'lvis_v0.5_val.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'annotations/lvis_v1_val.json',
+        img_prefix=data_root,
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'lvis_v0.5_val.json',
-        img_prefix=data_root + 'val2017/',
+        ann_file=data_root + 'annotations/lvis_v1_val.json',
+        img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
 optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
@@ -176,7 +184,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/faster_rcnn_r50_fpn_1x_lvis_newbgs'
-load_from = './data/download_models/faster_rcnn_r50_fpn_2x_20181010-443129e1.pth'
+work_dir = './work_dirs/bags_baseline'
+load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
 resume_from = None
 workflow = [('train', 1)]
