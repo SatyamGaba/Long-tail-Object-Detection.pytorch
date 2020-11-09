@@ -1,6 +1,6 @@
 # model settings
 model = dict(
-    type='GroupSoftmax',
+    type='FasterRCNN',
     pretrained='torchvision://resnet50',
     backbone=dict(
         type='ResNet',
@@ -42,9 +42,9 @@ model = dict(
             in_channels=256,
             fc_out_channels=1024,
             gs_config=dict(
-                label2binlabel='./data/lvis/label2binlabel.pt',
-                pred_slice='./data/lvis/pred_slice_with0.pt',
-                fg_split='./data/lvis/valsplit.pkl',
+                label2binlabel='./data/lvis_v1/label2binlabel.pt',
+                pred_slice='./data/lvis_v1/pred_slice_with0.pt',
+                fg_split='./data/lvis_v1/valsplit.pkl',
                 others_sample_ratio=8.0,
                 loss_bg=dict(
                     type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),

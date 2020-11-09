@@ -4,14 +4,14 @@ import torch.nn.functional as F
 import pickle
 import numpy as np
 
-from mmdet.core import (delta2bbox, force_fp32,
-                        multiclass_nms)
+from mmdet.core.bbox.coder.delta_xywh_bbox_coder import delta2bbox
+from mmcv.runner import force_fp32
+from mmdet.core import multiclass_nms
+from mmdet.models.builder import HEADS, build_loss
 from .convfc_bbox_head import Shared2FCBBoxHead
-from ..builder import build_loss
-from ..registry import HEADS
 
 
-@HEADS.register_module
+@HEADS.register_module()
 class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
     def __init__(self,
@@ -19,7 +19,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                  gs_config=None,
                  *args,
                  **kwargs):
-        super(GSBBoxHeadWith0, self).__init__(num_fcs=num_fcs,
+        super(GSBBoxHeadWith0, self).__init__(
                                          fc_out_channels=fc_out_channels,
                                          *args,
                                          **kwargs)
@@ -88,7 +88,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         return weight
 
     def _remap_labels(self, labels):
-
+        
+        print("_______________________________________________________________________")
+        print(type(labels), labels.dtype)
         num_bins = self.label2binlabel.shape[0]
         new_labels = []
         new_weights = []
@@ -197,8 +199,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         bg_score = new_scores[0]
         fg_score = new_scores[1:]
 
-        fg_merge = torch.zeros((num_proposals, 1231)).cuda()
-        merge = torch.zeros((num_proposals, 1231)).cuda()
+        fg_merge = torch.zeros((num_proposals, 1204)).cuda()
+        merge = torch.zeros((num_proposals, 1204)).cuda()
 
         for i, split in enumerate(self.fg_splits):
             fg_merge[:, split] = fg_score[i]
@@ -222,8 +224,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         bg_score = new_scores[0]
         fg_score = new_scores[1:]
 
-        fg_merge = torch.zeros((num_proposals, 1231)).cuda()
-        merge = torch.zeros((num_proposals, 1231)).cuda()
+        fg_merge = torch.zeros((num_proposals, 1204)).cuda()
+        merge = torch.zeros((num_proposals, 1204)).cuda()
 
         for i, split in enumerate(self.fg_splits):
             fg_merge[:, split] = fg_score[i]
@@ -287,8 +289,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         bg_score = new_scores[0]
         fg_score = new_scores[1:]
 
-        fg_merge = torch.zeros((num_proposals, 1231)).cuda()
-        merge = torch.zeros((num_proposals, 1231)).cuda()
+        fg_merge = torch.zeros((num_proposals, 1204)).cuda()
+        merge = torch.zeros((num_proposals, 1204)).cuda()
 
         for i, split in enumerate(self.fg_splits):
             fg_merge[:, split] = fg_score[i]
@@ -321,11 +323,11 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         max_scores = torch.cat(max_scores, 1)
         max_idx = max_scores.argmax(dim=1)
 
-        fg_merge = torch.zeros((num_proposals, 1231)).cuda()
-        merge = torch.zeros((num_proposals, 1231)).cuda()
+        fg_merge = torch.zeros((num_proposals, 1204)).cuda()
+        merge = torch.zeros((num_proposals, 1204)).cuda()
 
         for i, split in enumerate(self.fg_splits):
-            tmp_merge = torch.zeros((num_proposals, 1231)).cuda()
+            tmp_merge = torch.zeros((num_proposals, 1204)).cuda()
             tmp_merge[:, split] = fg_score[i]
             roi_idx = torch.where(max_idx == i,
                                   torch.ones_like(max_idx),
