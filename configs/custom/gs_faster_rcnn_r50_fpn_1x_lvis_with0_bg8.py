@@ -53,7 +53,7 @@ model = dict(
                     type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
                 ),          
             roi_feat_size=7,
-            num_classes=1203,
+            num_classes=1204,
             bbox_coder=dict(
                 type='DeltaXYWHBBoxCoder',
                 target_means=[0., 0., 0., 0.],
@@ -197,6 +197,7 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8'
 load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
+load_from = None # '/teams/CSE291_FA20_J00/team2/transfer/epoch_5.pth'
 resume_from = None
 workflow = [('train', 1)]
 
