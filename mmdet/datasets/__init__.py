@@ -5,8 +5,9 @@ from .custom import CustomDataset
 from .dataset_wrappers import (ClassBalancedDataset, ConcatDataset,
                                RepeatDataset)
 from .deepfashion import DeepFashionDataset
-from .lvis import LVISDataset, LVISV1Dataset, LVISV05Dataset
+# from .lvis import LVISDataset, LVISV1Dataset, LVISV05Dataset
 # from .lvis_per_image_eval import LVISDataset, LVISV1Dataset, LVISV05Dataset
+from .lvis_bags import LVISV1Dataset
 from .samplers import DistributedGroupSampler, DistributedSampler, GroupSampler
 from .utils import replace_ImageToTensor
 from .voc import VOCDataset
