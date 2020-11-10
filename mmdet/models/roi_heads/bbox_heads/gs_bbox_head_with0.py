@@ -89,8 +89,6 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
     def _remap_labels(self, labels):
         
-#         print("_______________________________________________________________________")
-#         print(type(labels), labels.dtype, labels.shape)
         labels = labels.long()
         num_bins = self.label2binlabel.shape[0]
         new_labels = []
@@ -107,7 +105,6 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 weight = self._sample_others(new_bin_label)
             new_labels.append(new_bin_label)
             new_weights.append(weight)
-#             print(torch.min(labels), torch.max(labels))#.shape, new_bin_label.shape, weight.shape)
             avg_factor = max(torch.sum(weight).float().item(), 1.)
             new_avg.append(avg_factor)
 
@@ -156,22 +153,16 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
              bbox_targets,
              bbox_weights,
              reduction_override=None):
+        labels = labels - 1 # mannually added
         losses = dict()
-#         print("1>>>>>>>", reduction_override, rois.shape)
         if cls_score is not None:
-#             print("2>>>>>>>", reduction_override)
-            print(torch.min(labels), torch.max(labels))
 
             # Original label_weights is 1 for each roi.
             new_labels, new_weights, new_avgfactors = self._remap_labels(labels)
-#             print("3>>>>>>>", reduction_override)
             new_preds = self._slice_preds(cls_score)
-#             print("4>>>>>>>", reduction_override)
-
 
             num_bins = len(new_labels)
             for i in range(num_bins):
-#                 print("5>>>>>>>", reduction_override)
                 losses['loss_cls_bin{}'.format(i)] = self.loss_bins[i](
                     new_preds[i],
                     new_labels[i],
