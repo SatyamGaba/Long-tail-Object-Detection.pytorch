@@ -154,7 +154,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
              bbox_targets,
              bbox_weights,
              reduction_override=None):
-        labels = labels - 1 # mannually added
+        #print(torch.max(labels),torch.min(labels))
+        #labels = labels - 1 # mannually added
         losses = dict()
         if cls_score is not None:
 
@@ -173,7 +174,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 )
 
         if bbox_pred is not None:
-            pos_inds = labels > 0
+            pos_inds = labels < 1203
             if self.reg_class_agnostic:
                 pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), 4)[pos_inds]
             else:
@@ -379,4 +380,3 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                                                     cfg.score_thr, cfg.nms,
                                                     cfg.max_per_img)
 
-            return det_bboxes, det_labels
