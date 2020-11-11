@@ -91,6 +91,8 @@ class BBoxTestMixin(object):
                 scale_factors[i],
                 rescale=rescale,
                 cfg=rcnn_test_cfg)
+            #print('BBOX: ', det_bbox)
+            #print('LABEL: ', det_label)
             det_bboxes.append(det_bbox)
             det_labels.append(det_label)
         return det_bboxes, det_labels

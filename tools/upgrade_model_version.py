@@ -178,8 +178,8 @@ def convert(in_file, out_file, num_classes):
 
 def main():
     parser = argparse.ArgumentParser(description='Upgrade model version')
-    parser.add_argument('in_file', help='input checkpoint file')
-    parser.add_argument('out_file', help='output checkpoint file')
+    parser.add_argument('--in_file', help='input checkpoint file')
+    parser.add_argument('--out_file', help='output checkpoint file')
     parser.add_argument(
         '--num-classes',
         type=int,

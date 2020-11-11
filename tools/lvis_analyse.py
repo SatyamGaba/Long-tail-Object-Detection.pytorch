@@ -100,7 +100,6 @@ def get_split():
     with open(split_file_name, 'wb') as f:
         pickle.dump(splits, f)
 
-
 def ana_param():
 
     cate2insnum_file = '../data/lvis_v1/cate2insnum.pkl'

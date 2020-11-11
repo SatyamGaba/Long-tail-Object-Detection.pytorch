@@ -101,8 +101,10 @@ venv.bak/
 /site
 
 # mypy
+*.swp
 .mypy_cache/
-
+eval_testing/
+eval-results/
 data/
 .vscode
 .idea
