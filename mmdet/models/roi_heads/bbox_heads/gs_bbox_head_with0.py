@@ -394,6 +394,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
             cls_score = sum(cls_score) / float(len(cls_score))
 
         scores = self._merge_score(cls_score)
+        #print('SCORE LENGTHS: ',len(cls_score[0]), len(scores[0]))
         # scores = F.softmax(cls_score, dim=1) if cls_score is not None else None
 
         if bbox_pred is not None:

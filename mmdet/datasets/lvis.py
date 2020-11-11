@@ -736,7 +736,7 @@ class LVISV1Dataset(LVISDataset):
 #        assert not self.custom_classes, 'LVIS custom classes is not supported' # manually commented by Satyam Gaba
         self.cat_ids = self.coco.get_cat_ids()
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
-        self.img_ids = self.coco.get_img_ids()[:100]
+        self.img_ids = self.coco.get_img_ids()
         data_infos = []
         for i in self.img_ids:
             info = self.coco.load_imgs([i])[0]
