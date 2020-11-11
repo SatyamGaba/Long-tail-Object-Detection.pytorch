@@ -92,8 +92,8 @@ def get_split():
     splits['[1000, ~)'] = np.array(binover, dtype=np.int)
 #     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
 #     splits['background'] = np.zeros((1,), dtype=np.int)
-    splits['normal'] = np.arange(1204)
-    splits['background'] = np.array([1204],)
+    splits['normal'] = np.arange(1203)
+    splits['background'] = np.array([1203],)
     splits['all'] = np.arange(1204)
 
     split_file_name = './data/lvis_v1/valsplit.pkl'
