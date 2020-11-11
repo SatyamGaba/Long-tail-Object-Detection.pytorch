@@ -25,7 +25,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                                          **kwargs)
         # 1232, 0 for background, 1231 for foreground
         self.fc_cls = nn.Linear(self.cls_last_dim,
-                                self.num_classes + gs_config.num_bins)
+                                self.num_classes + gs_config.num_bins + 1)
 
         # self.loss_bg = build_loss(gs_config.loss_bg)
 

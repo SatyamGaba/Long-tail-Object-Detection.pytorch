@@ -17,23 +17,23 @@ def get_cate_gs():
     binlabel_count = [1, 1, 1, 1, 1]
     label2binlabel = np.zeros((5, 1204), dtype=np.int)
 
-#     label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
+    #label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
     label2binlabel[0, :-1] = binlabel_count[0]
     binlabel_count[0] += 1
 
     for cid, cate in train_catsinfo.items():
         ins_count = cate['instance_count']
         if ins_count < 10:
-            label2binlabel[1, cid] = binlabel_count[1]
+            label2binlabel[1, cid-1] = binlabel_count[1]
             binlabel_count[1] += 1
         elif ins_count < 100:
-            label2binlabel[2, cid] = binlabel_count[2]
+            label2binlabel[2, cid-1] = binlabel_count[2]
             binlabel_count[2] += 1
         elif ins_count < 1000:
-            label2binlabel[3, cid] = binlabel_count[3]
+            label2binlabel[3, cid-1] = binlabel_count[3]
             binlabel_count[3] += 1
         else:
-            label2binlabel[4, cid] = binlabel_count[4]
+            label2binlabel[4, cid-1] = binlabel_count[4]
             binlabel_count[4] += 1
 
 
@@ -92,8 +92,8 @@ def get_split():
     splits['[1000, ~)'] = np.array(binover, dtype=np.int)
 #     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
 #     splits['background'] = np.zeros((1,), dtype=np.int)
-    splits['normal'] = np.arange(1203)
-    splits['background'] = np.array([1203],)
+    splits['normal'] = np.arange(1204)
+    splits['background'] = np.array([1204],)
     splits['all'] = np.arange(1204)
 
     split_file_name = './data/lvis_v1/valsplit.pkl'

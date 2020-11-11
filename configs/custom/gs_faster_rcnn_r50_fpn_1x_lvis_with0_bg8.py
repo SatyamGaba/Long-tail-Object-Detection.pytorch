@@ -53,7 +53,7 @@ model = dict(
                     type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
                 ),          
             roi_feat_size=7,
-            num_classes=1204,
+            num_classes=1203,
             bbox_coder=dict(
                 type='DeltaXYWHBBoxCoder',
                 target_means=[0., 0., 0., 0.],
@@ -126,7 +126,7 @@ test_cfg = dict(
 )
 # dataset settings
 dataset_type = 'LVISV1Dataset'
-data_root = 'data/lvis_v1/'
+data_root = '/cephfs-team2/tsircar/BalancedGroupSoftmax/data/lvis/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -156,20 +156,20 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=2,
+    workers_per_gpu=0,
     train=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_train_subset.json',
+        ann_file='/cephfs-team2/tsircar/lt_od/data/lvis_v1/' + 'annotations/lvis_v1_train.json',
         img_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val_subset.json',
+        ann_file= '/cephfs-team2/tsircar/lt_od/data/lvis_v1/' + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val_subset.json',
+        ann_file= '/cephfs-team2/tsircar/lt_od/data/lvis_v1/'  + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
