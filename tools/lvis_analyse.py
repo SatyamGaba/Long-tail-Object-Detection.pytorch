@@ -17,7 +17,8 @@ def get_cate_gs():
     binlabel_count = [1, 1, 1, 1, 1]
     label2binlabel = np.zeros((5, 1204), dtype=np.int)
 
-    label2binlabel[0, 1:] = binlabel_count[0]
+#     label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
+    label2binlabel[0, :-1] = binlabel_count[0]
     binlabel_count[0] += 1
 
     for cid, cate in train_catsinfo.items():
@@ -89,8 +90,10 @@ def get_split():
     splits['[10, 100)'] = np.array(bin100, dtype=np.int)
     splits['[100, 1000)'] = np.array(bin1000, dtype=np.int)
     splits['[1000, ~)'] = np.array(binover, dtype=np.int)
-    splits['normal'] = np.arange(1, 1204)
-    splits['background'] = np.zeros((1,), dtype=np.int)
+#     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
+#     splits['background'] = np.zeros((1,), dtype=np.int)
+    splits['normal'] = np.arange(1203)
+    splits['background'] = np.array([1203],)
     splits['all'] = np.arange(1204)
 
     split_file_name = './data/lvis_v1/valsplit.pkl'
