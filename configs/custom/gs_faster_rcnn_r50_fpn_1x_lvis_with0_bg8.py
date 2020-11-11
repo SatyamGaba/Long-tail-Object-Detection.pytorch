@@ -156,7 +156,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=0,
+    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         ann_file='/cephfs-team2/tsircar/lt_od/data/lvis_v1/' + 'annotations/lvis_v1_train.json',
@@ -169,7 +169,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file= '/cephfs-team2/tsircar/lt_od/data/lvis_v1/'  + 'annotations/lvis_v1_val.json',
+        ann_file= '/cephfs-team2/tsircar/lt_od/data/lvis_v1/'  + 'annotations/lvis_v1_val_subset_of_subset.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
@@ -182,7 +182,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[8, 11])
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(start=0,interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
