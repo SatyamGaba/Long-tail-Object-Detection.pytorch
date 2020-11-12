@@ -6,7 +6,7 @@ import os
 import json
 import torch
 from pycocotools.coco import COCO
-
+import random
 
 def get_cate_gs():
 
@@ -84,7 +84,8 @@ def get_split():
             bin1000.append(cid)
         else:
             binover.append(cid)
-
+    
+    # 200 + 412 + 334 + 257
     splits = {}
     splits['(0, 10)'] = np.array(bin10, dtype=np.int)
     splits['[10, 100)'] = np.array(bin100, dtype=np.int)
@@ -99,6 +100,119 @@ def get_split():
     split_file_name = './data/lvis_v1/valsplit.pkl'
     with open(split_file_name, 'wb') as f:
         pickle.dump(splits, f)
+
+def get_cate_gs_random():
+
+    train_ann_file = './data/lvis_v1/annotations/lvis_v1_train.json'
+    lvis_train = LVIS(train_ann_file)
+    train_catsinfo = lvis_train.cats
+
+    binlabel_count = [1, 1, 1, 1, 1]
+    label2binlabel = np.zeros((5, 1204), dtype=np.int)
+
+    #label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
+    label2binlabel[0, :-1] = binlabel_count[0]
+    binlabel_count[0] += 1
+
+    labels = list(np.arange(1203)+1)
+    random.seed(3333)
+    random.shuffle(labels)
+    sizes = [200, 412, 334, 257]
+    bin1_labels = labels[:sizes[0]]
+    bin2_labels = labels[(sizes[0]):(sizes[0]+sizes[1])]
+    bin3_labels = labels[(sizes[0]+sizes[1]):(sizes[0]+sizes[1]+sizes[2])]
+    bin4_labels = labels[(sizes[0]+sizes[1]+sizes[2]):]
+    print(len(bin1_labels), len(bin2_labels), len(bin3_labels), len(bin4_labels))
+    
+    for cid, cate in train_catsinfo.items():
+        ins_count = cate['instance_count']
+        if cid in bin1_labels:
+            label2binlabel[1, cid-1] = binlabel_count[1]
+            binlabel_count[1] += 1
+        elif cid in bin2_labels:
+            label2binlabel[2, cid-1] = binlabel_count[2]
+            binlabel_count[2] += 1
+        elif cid in bin3_labels:
+            label2binlabel[3, cid-1] = binlabel_count[3]
+            binlabel_count[3] += 1
+        else:
+            label2binlabel[4, cid-1] = binlabel_count[4]
+            binlabel_count[4] += 1
+
+
+    savebin = torch.from_numpy(label2binlabel)
+
+    save_path = './data/lvis_v1/label2binlabel_random.pt'
+    torch.save(savebin, save_path)
+
+    # start and length
+    pred_slice = np.zeros((5, 2), dtype=np.int)
+    start_idx = 0
+    for i, bincount in enumerate(binlabel_count):
+        pred_slice[i, 0] = start_idx
+        pred_slice[i, 1] = bincount
+        start_idx += bincount
+
+    savebin = torch.from_numpy(pred_slice)
+    save_path = './data/lvis_v1/pred_slice_with0_random.pt'
+    torch.save(savebin, save_path)
+
+    # pdb.set_trace()
+
+    return pred_slice
+
+def get_split_random():
+
+    train_ann_file = './data/lvis_v1/annotations/lvis_v1_train.json'
+    val_ann_file = './data/lvis_v1/annotations/lvis_v1_val.json'
+
+    # For training set
+    lvis_train = LVIS(train_ann_file)
+    # lvis_val = LVIS(val_ann_file)
+    train_catsinfo = lvis_train.cats
+    # val_catsinfo = lvis_val.cats
+
+    labels = list(np.arange(1203)+1)
+    random.seed(3333)
+    random.shuffle(labels)
+    sizes = [200, 412, 334, 257]
+    bin1_labels = labels[:sizes[0]]
+    bin2_labels = labels[(sizes[0]):(sizes[0]+sizes[1])]
+    bin3_labels = labels[(sizes[0]+sizes[1]):(sizes[0]+sizes[1]+sizes[2])]
+    bin4_labels = labels[(sizes[0]+sizes[1]+sizes[2]):]
+    print(len(bin1_labels), len(bin2_labels), len(bin3_labels), len(bin4_labels))
+    
+    bin10 = []
+    bin100 = []
+    bin1000 = []
+    binover = []
+
+    for cid, cate in train_catsinfo.items():
+        ins_count = cate['instance_count']
+        if cid in bin1_labels:
+            bin10.append(cid)
+        elif cid in bin2_labels:
+            bin100.append(cid)
+        elif cid in bin3_labels:
+            bin1000.append(cid)
+        else:
+            binover.append(cid)
+
+    splits = {}
+    splits['(0, 10)'] = np.array(bin10, dtype=np.int)
+    splits['[10, 100)'] = np.array(bin100, dtype=np.int)
+    splits['[100, 1000)'] = np.array(bin1000, dtype=np.int)
+    splits['[1000, ~)'] = np.array(binover, dtype=np.int)
+#     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
+#     splits['background'] = np.zeros((1,), dtype=np.int)
+    splits['normal'] = np.arange(1204)
+    splits['background'] = np.array([1204],)
+    splits['all'] = np.arange(1204)
+
+    split_file_name = './data/lvis_v1/valsplit_random.pkl'
+    with open(split_file_name, 'wb') as f:
+        pickle.dump(splits, f)
+        
 
 def ana_param():
 
@@ -1182,34 +1296,11 @@ def update_cls():
 
 if __name__ == '__main__':
 
-    # ana_param()
-    # get_mask()
-    # trymapping()
-    # ana_coco_param()
-    # load_checkpoint()
-    get_cate_gs()
-    get_split()
-    # get_cate_weight()
-
-    # get_bin_weight()
-
-    # get_cate_gs2()
-    # get_split2()
-
-    # get_draw_val_imgs()
-    # load_checkpoint_all()
-
-    # get_cate_gs8()
-    # get_split8()
-
-    # get_cate_weight_bf()
-    # get_cate_weight_bours()
-
-    # get_hist()
-    # get_dense_det()
-    # del_tail()
-    # construct_data()
-    # get_val()
-#     count_ins()
-    # del_nondense_cls()
-    # update_cls()
+    # Original BAGS
+#     get_cate_gs()
+#     get_split()
+    
+    # Random BAGS
+    get_cate_gs_random()
+    get_split_random()
+    
