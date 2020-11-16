@@ -338,7 +338,9 @@ class LVISV05Dataset(CocoDataset):
         try:
             import lvis
             assert lvis.__version__ >= '10.5.3'
-            from lvis import LVISResults, LVISEval
+#             from lvis import LVISResults, LVISEval
+            from lvis import LVISResults
+            from .lvis_eval_class import LVISEval
         except AssertionError:
             raise AssertionError('Incompatible version of lvis is installed. '
                                  'Run pip uninstall lvis first. Then run pip '
