@@ -129,11 +129,11 @@ class LVISEval:
 
         self._prepare()
 
-        self.ious = {
-            (img_id, cat_id): self.compute_iou(img_id, cat_id)
-            for img_id in self.params.img_ids
-            for cat_id in cat_ids
-        }
+#         self.ious = {
+#             (img_id, cat_id): self.compute_iou(img_id, cat_id)
+#             for img_id in self.params.img_ids
+#             for cat_id in cat_ids
+#         }
 
         # loop through images, area range, max detection number
         self.eval_imgs = [
@@ -214,9 +214,10 @@ class LVISEval:
 
         # load computed ious
         ious = (
-            self.ious[img_id, cat_id][:, gt_idx]
-            if len(self.ious[img_id, cat_id]) > 0
-            else self.ious[img_id, cat_id]
+            self.compute_iou(img_id, cat_id)[:, gt_idx]
+#             self.ious[img_id, cat_id][:, gt_idx]
+            if len(self.compute_iou(img_id, cat_id)) > 0
+            else self.compute_iou(img_id, cat_id)
         )
 
         num_thrs = len(self.params.iou_thrs)
