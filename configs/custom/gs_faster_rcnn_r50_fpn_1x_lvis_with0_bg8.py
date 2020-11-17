@@ -173,7 +173,7 @@ data = dict(
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.001, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.01/8, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -182,7 +182,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[8, 11])
-checkpoint_config = dict(start=0,interval=1)
+checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -196,9 +196,8 @@ total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8'
-load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
-load_from = None # '/teams/CSE291_FA20_J00/team2/transfer/epoch_5.pth'
-resume_from = None
+load_from = None#'./checkpoints/trained/baseline_epoch_12.pth'
+resume_from = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8/latest.pth'#None
 workflow = [('train', 1)]
 
 # Train which part, 0 for all, 1 for cls, 2 for bbox_head

@@ -158,7 +158,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val.json',
+        ann_file=data_root + 'annotations/lvis_v1_val_subset.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
