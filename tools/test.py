@@ -199,7 +199,7 @@ def main():
                 eval_kwargs.pop(key, None)
             eval_kwargs.update(dict(metric=args.eval, **kwargs))
             ### manually added // Satyam Gaba
-#             eval_kwargs.update(dict(classwise=True))
+            eval_kwargs.update(dict(classwise=True))
 #             eval_kwargs.update(dict(imagewise=True))
             
 #             import sys
