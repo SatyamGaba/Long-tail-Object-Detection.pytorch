@@ -127,8 +127,10 @@ class LVISEval:
         else:
             cat_ids = [-1]
 
+        print('Entering prepare()')
         self._prepare()
-
+        print('Done preparing')
+        
 #         self.ious = {
 #             (img_id, cat_id): self.compute_iou(img_id, cat_id)
 #             for img_id in self.params.img_ids
@@ -136,12 +138,14 @@ class LVISEval:
 #         }
 
         # loop through images, area range, max detection number
+        print('Skipped IOU')
         self.eval_imgs = [
             (img_id, cat_id, area_rng)
             for cat_id in cat_ids
             for area_rng in self.params.area_rng
             for img_id in self.params.img_ids
         ]
+        print('Done eval_imgs computation')
 
     def _get_gt_dt(self, img_id, cat_id):
         """Create gt, dt which are list of anns/dets. If use_cats is true
@@ -305,6 +309,7 @@ class LVISEval:
         else:
             cat_ids = [-1]
 
+        print('Step 1A')
         num_thrs = len(self.params.iou_thrs)
         num_recalls = len(self.params.rec_thrs)
         num_cats = len(cat_ids)
@@ -319,11 +324,11 @@ class LVISEval:
 
         # Initialize dt_pointers
         dt_pointers = {}
-        for cat_idx in range(num_cats):
-            dt_pointers[cat_idx] = {}
-            for area_idx in range(num_area_rngs):
-                dt_pointers[cat_idx][area_idx] = {}
-
+        #for cat_idx in range(num_cats):
+        #    dt_pointers[cat_idx] = {}
+        #    for area_idx in range(num_area_rngs):
+        #        dt_pointers[cat_idx][area_idx] = {}
+        print('Step 2A')
         # Per category evaluation
         for cat_idx in range(num_cats):
             Nk = cat_idx * num_area_rngs * num_imgs
@@ -363,11 +368,11 @@ class LVISEval:
                 tp_sum = np.cumsum(tps, axis=1).astype(dtype=np.float)
                 fp_sum = np.cumsum(fps, axis=1).astype(dtype=np.float)
 
-                dt_pointers[cat_idx][area_idx] = {
-                    "dt_ids": dt_ids,
-                    "tps": tps,
-                    "fps": fps,
-                }
+                #dt_pointers[cat_idx][area_idx] = {
+                #    "dt_ids": dt_ids,
+                #    "tps": tps,
+                #    "fps": fps,
+                #}
 
                 for iou_thr_idx, (tp, fp) in enumerate(zip(tp_sum, fp_sum)):
                     tp = np.array(tp)
@@ -405,7 +410,7 @@ class LVISEval:
                     except:
                         pass
                     precision[iou_thr_idx, :, cat_idx, area_idx] = np.array(pr_at_recall)
-
+        print('Step 4A')
         self.eval = {
             "params": self.params,
             "counts": [num_thrs, num_recalls, num_cats, num_area_rngs],
