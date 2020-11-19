@@ -26,15 +26,19 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
         nn.Module: The constructed detector.
     """
     if isinstance(config, str):
-        config = mmcv.Config.fromfile(config)
+        config = mmcv.Config.fromfile(config)        
     elif not isinstance(config, mmcv.Config):
         raise TypeError('config must be a filename or Config object, '
                         f'but got {type(config)}')
+    print('Step 0')
     config.model.pretrained = None
+    print('Step 1')
     model = build_detector(config.model, test_cfg=config.test_cfg)
     if checkpoint is not None:
         map_loc = 'cpu' if device == 'cpu' else None
+        map_loc = 'cpu'
         checkpoint = load_checkpoint(model, checkpoint, map_location=map_loc)
+        print('Step 3')
         if 'CLASSES' in checkpoint['meta']:
             model.CLASSES = checkpoint['meta']['CLASSES']
         else:
@@ -42,8 +46,11 @@ def init_detector(config, checkpoint=None, device='cuda:0'):
             warnings.warn('Class names are not saved in the checkpoint\'s '
                           'meta data, use COCO classes by default.')
             model.CLASSES = get_classes('coco')
+        print('Step 4')
     model.cfg = config  # save the config in the model for convenience
+    print('Step 5')
     model.to(device)
+    print('Step 6')
     model.eval()
     return model
 
