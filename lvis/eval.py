@@ -10,7 +10,6 @@ from .lvis import LVIS
 from .results import LVISResults
 
 import sys
-from pympler import asizeof
 
 def sizeof_fmt(num, suffix='B'):
     ''' by Fred Cirera,  https://stackoverflow.com/a/1094933/1870254, modified'''

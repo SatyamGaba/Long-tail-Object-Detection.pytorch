@@ -7,7 +7,7 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
+        frozen_stages=4,
         style='pytorch'),
     neck=dict(
         type='FPN',
@@ -156,7 +156,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=0,
+    workers_per_gpu=2,
     train=dict(
         type=dataset_type,
         ann_file= data_root + 'annotations/lvis_v1_train.json',
@@ -169,7 +169,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_val_subsubset.json',
+        ann_file= data_root + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
