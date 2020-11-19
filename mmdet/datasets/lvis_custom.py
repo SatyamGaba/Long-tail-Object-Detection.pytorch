@@ -372,8 +372,10 @@ class LVISV05Dataset(CocoDataset):
             jsonfile_prefix = osp.join(tmp_dir.name, 'results')
         else:
             tmp_dir = None
+        cat_ids_copy = self.cat_ids.copy()
+	self.cat_ids = list(range(1,1204))
         result_files = self.results2json(results, jsonfile_prefix)
-
+	self.cat_ids = cat_ids_copy
         eval_results = {}
         # get original api
         lvis_gt = self.coco
@@ -459,7 +461,7 @@ class LVISV05Dataset(CocoDataset):
                     ])
                     table_data = [headers]
                     table_data += [result for result in results_2d]
-                    np.save("classwise_AP.npy", np.array(table_data))
+                    np.save(self.ap_file_prefix + "_classwise_AP.npy", np.array(table_data))
                     table = AsciiTable(table_data)
                     print_log('\n' + table.table, logger=logger)
 
@@ -740,7 +742,8 @@ class LVISV1Dataset(LVISDataset):
             raise ImportError('Package lvis is not installed. Please run pip '
                               'install mmlvis to install open-mmlab forked '
                               'lvis.')
-        self.coco = LVIS(ann_file)
+        self.ap_file_prefix = (ann_file.split('.')[0]).split('/')[-1]
+	self.coco = LVIS(ann_file)
 #        assert not self.custom_classes, 'LVIS custom classes is not supported' # manually commented by Satyam Gaba
         self.cat_ids = self.coco.get_cat_ids()
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}

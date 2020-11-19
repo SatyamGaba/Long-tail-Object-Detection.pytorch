@@ -169,7 +169,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_val_subsubset.json',
+        ann_file= data_root + 'annotations/lvis_v1_val_g3.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
@@ -195,7 +195,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8'
+work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_g3'
 load_from = None#'./checkpoints/trained/baseline_epoch_12.pth'
 resume_from = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8/latest.pth'#None
 workflow = [('train', 1)]
