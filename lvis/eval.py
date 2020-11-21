@@ -146,16 +146,10 @@ class LVISEval:
                      for img_id in self.params.img_ids for cat_id in cat_ids}
 
         # loop through images, area range, max detection number
-        for idx, img_id in enumerate(self.params.img_ids):
             self.eval_imgs = [
                 self.evaluate_img(img_id, cat_id, area_rng) for cat_id in cat_ids
-                for area_rng in self.params.area_rng]
-            if idx%10 == 0:
-#                 for name, size in sorted(((name, sys.getsizeof(value)) for name, value in locals().items()),
-#                                      key= lambda x: -x[1])[:10]:
-                size = sys.getsizeof(self.eval_imgs)
-                print("{:>8}".format(sizeof_fmt(size)))
-                print("-----------------------------")
+                                                            for area_rng in self.params.area_rng
+                                                            for img_id in self.params.img_id]
                 
     def _get_gt_dt(self, img_id, cat_id):
         """Create gt, dt which are list of anns/dets. If use_cats is true
@@ -323,12 +317,12 @@ class LVISEval:
         precision = -np.ones((num_thrs, num_recalls, num_cats, num_area_rngs))
         recall = -np.ones((num_thrs, num_cats, num_area_rngs))
 
-        # Initialize dt_pointers
-        dt_pointers = {}
-        for cat_idx in range(num_cats):
-            dt_pointers[cat_idx] = {}
-            for area_idx in range(num_area_rngs):
-                dt_pointers[cat_idx][area_idx] = {}
+#         # Initialize dt_pointers
+#         dt_pointers = {}
+#         for cat_idx in range(num_cats):
+#             dt_pointers[cat_idx] = {}
+#             for area_idx in range(num_area_rngs):
+#                 dt_pointers[cat_idx][area_idx] = {}
 
         # Per category evaluation
         for cat_idx in range(num_cats):
@@ -371,11 +365,11 @@ class LVISEval:
                 tp_sum = np.cumsum(tps, axis=1).astype(dtype=np.float)
                 fp_sum = np.cumsum(fps, axis=1).astype(dtype=np.float)
 
-                dt_pointers[cat_idx][area_idx] = {
-                    'dt_ids': dt_ids,
-                    'tps': tps,
-                    'fps': fps,
-                }
+#                 dt_pointers[cat_idx][area_idx] = {
+#                     'dt_ids': dt_ids,
+#                     'tps': tps,
+#                     'fps': fps,
+#                 }
 
                 for iou_thr_idx, (tp, fp) in enumerate(zip(tp_sum, fp_sum)):
                     tp = np.array(tp)
@@ -419,7 +413,7 @@ class LVISEval:
             'date': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'precision': precision,
             'recall': recall,
-            'dt_pointers': dt_pointers,
+#             'dt_pointers': dt_pointers,
         }
 
     def _summarize(self,
