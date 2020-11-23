@@ -10,13 +10,13 @@ import torch
 from mmcv import Config, DictAction
 from mmcv.runner import init_dist
 from mmcv.utils import get_git_hash
+from mmcv.runner import get_dist_info
 
 from mmdet import __version__
 from mmdet.apis import set_random_seed, train_detector
 from mmdet.datasets import build_dataset
 from mmdet.models import build_detector
 from mmdet.utils import collect_env, get_root_logger
-
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -63,6 +63,10 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
+    parser.add_argument(
+        '--autoscale-lr',
+        action='store_false',
+        help='automatically scale lr with the number of gpus')
     parser.add_argument('--local_rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
@@ -78,6 +82,49 @@ def parse_args():
 
     return args
 
+def select_training_param(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    model.roi_head.bbox_head.fc_cls.weight.requires_grad = True
+    model.roi_head.bbox_head.fc_cls.bias.requires_grad = True
+
+    return model
+
+
+def select_head(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for v in model.roi_head.bbox_head.parameters():
+        v.requires_grad = True
+
+    return model
+
+def select_cascade_cls_params(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for child in model.roi_head.bbox_head.children():
+        for v in child.fc_cls.parameters():
+            v.requires_grad = True
+
+    return model
+
+def select_mask_params(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for v in model.roi_head.bbox_head.parameters():
+        v.requires_grad = True
+    for v in model.mask_head.parameters():
+        v.requires_grad = True
+
+    return model
 
 def main():
     args = parse_args()
@@ -107,7 +154,13 @@ def main():
         cfg.gpu_ids = args.gpu_ids
     else:
         cfg.gpu_ids = range(1) if args.gpus is None else range(args.gpus)
-
+    print("gpuids :", cfg.gpu_ids)
+    print("gpus :", args.gpus)
+    
+    #if args.autoscale_lr:
+        # apply the linear scaling rule (https://arxiv.org/abs/1706.02677)
+    cfg.optimizer['lr'] = cfg.optimizer['lr'] * 4 / 8
+        
     # init distributed env first, since logger depends on the dist info.
     if args.launcher == 'none':
         distributed = False
@@ -150,8 +203,9 @@ def main():
 
     model = build_detector(
         cfg.model, train_cfg=cfg.train_cfg, test_cfg=cfg.test_cfg)
-
+    
     datasets = [build_dataset(cfg.data.train)]
+   
     if len(cfg.workflow) == 2:
         val_dataset = copy.deepcopy(cfg.data.val)
         val_dataset.pipeline = cfg.data.train.pipeline
@@ -164,6 +218,25 @@ def main():
             CLASSES=datasets[0].CLASSES)
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
+
+    tune_part = cfg.get('selectp', 0)
+    print("tune_part :", tune_part)
+    
+    if tune_part == 1:
+        print('Train fc_cls only.')
+        model = select_training_param(model)
+    elif tune_part == 2:
+        print('Train bbox head only.')
+        model = select_head(model)
+    elif tune_part == 3:
+        print('Train cascade fc_cls only.')
+        model = select_cascade_cls_params(model)
+    elif tune_part == 4:
+        print('Train bbox and mask head.')
+        model = select_mask_params(model)
+    else:
+        print('Train all params.')
+    
     train_detector(
         model,
         datasets,

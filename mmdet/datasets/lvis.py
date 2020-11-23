@@ -451,7 +451,7 @@ class LVISV05Dataset(CocoDataset):
                     ])
                     table_data = [headers]
                     table_data += [result for result in results_2d]
-                    np.save("classwise_AP.npy", np.array(table_data))
+                    np.save("classwise_AP_tao.npy", np.array(table_data))
                     table = AsciiTable(table_data)
                     print_log('\n' + table.table, logger=logger)
 

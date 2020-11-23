@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 
 from .samplers import DistributedGroupSampler, DistributedSampler, GroupSampler
 
+
 if platform.system() != 'Windows':
     # https://github.com/pytorch/pytorch/issues/973
     import resource
@@ -53,6 +54,11 @@ def _concat_dataset(cfg, default_args=None):
 def build_dataset(cfg, default_args=None):
     from .dataset_wrappers import (ConcatDataset, RepeatDataset,
                                    ClassBalancedDataset)
+#     print("inside build_dataset")
+#     rank, world_size = get_dist_info()
+#     print("rank", "world_size")
+#     print(rank, world_size)
+    
     if isinstance(cfg, (list, tuple)):
         dataset = ConcatDataset([build_dataset(c, default_args) for c in cfg])
     elif cfg['type'] == 'ConcatDataset':
@@ -69,7 +75,11 @@ def build_dataset(cfg, default_args=None):
         dataset = _concat_dataset(cfg, default_args)
     else:
         dataset = build_from_cfg(cfg, DATASETS, default_args)
-
+#     print("after build_from_cfg")
+#     rank, world_size = get_dist_info()
+#     print("rank", "world_size")
+#     print(rank, world_size)
+    
     return dataset
 
 
@@ -102,6 +112,8 @@ def build_dataloader(dataset,
         DataLoader: A PyTorch dataloader.
     """
     rank, world_size = get_dist_info()
+#     print("rank", "world_size")
+#     print(rank, world_size)
     if dist:
         # DistributedGroupSampler will definitely shuffle the data to satisfy
         # that images on each GPU are in the same group

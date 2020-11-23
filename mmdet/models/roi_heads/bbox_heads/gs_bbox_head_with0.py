@@ -63,8 +63,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         # only works for non bg-fg bins
 
-#         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
-        fg = torch.where(label < 1203, torch.ones_like(label),
+        fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
+#         fg = torch.where(label < 1203, torch.ones_like(label),
                          torch.zeros_like(label))
         fg_idx = fg.nonzero(as_tuple=True)[0]
         fg_num = fg_idx.shape[0]

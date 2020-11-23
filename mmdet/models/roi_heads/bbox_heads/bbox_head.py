@@ -163,6 +163,7 @@ class BBoxHead(nn.Module):
             # 0~self.num_classes-1 are FG, self.num_classes is BG
             pos_inds = (labels >= 0) & (labels < bg_class_ind)
             # do not perform bounding box regression for BG anymore.
+            losses['loss_bbox'] = torch.tensor(0.).to(bbox_pred.device) # changed by Shrey
             if pos_inds.any():
                 if self.reg_decoded_bbox:
                     bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)

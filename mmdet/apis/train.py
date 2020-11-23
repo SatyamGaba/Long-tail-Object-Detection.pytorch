@@ -11,6 +11,8 @@ from mmdet.core import DistEvalHook, EvalHook
 from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
 from mmdet.utils import get_root_logger
+from mmcv.runner import get_dist_info
+
 
 
 def set_random_seed(seed, deterministic=False):
@@ -56,7 +58,13 @@ def train_detector(model,
                 'Automatically set "samples_per_gpu"="imgs_per_gpu"='
                 f'{cfg.data.imgs_per_gpu} in this experiments')
         cfg.data.samples_per_gpu = cfg.data.imgs_per_gpu
-
+        
+    rank, world_size = get_dist_info()
+    print("in train_detector")
+    print("rank", rank)
+    print("world_size", world_size)
+    
+    print("entering dataloader")
     data_loaders = [
         build_dataloader(
             ds,
@@ -67,7 +75,8 @@ def train_detector(model,
             dist=distributed,
             seed=cfg.seed) for ds in dataset
     ]
-
+    print(cfg.gpu_ids, torch.cuda.current_device())
+    print(distributed)
     # put model on gpus
     if distributed:
         find_unused_parameters = cfg.get('find_unused_parameters', False)
@@ -75,13 +84,13 @@ def train_detector(model,
         # torch.nn.parallel.DistributedDataParallel
         model = MMDistributedDataParallel(
             model.cuda(),
-            device_ids=[torch.cuda.current_device()],
+            device_ids= [torch.cuda.current_device()],#list(range(torch.cuda.device_count())),
             broadcast_buffers=False,
             find_unused_parameters=find_unused_parameters)
     else:
         model = MMDataParallel(
             model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
-
+    print(1)
     # build runner
     optimizer = build_optimizer(model, cfg.optimizer)
     runner = EpochBasedRunner(
@@ -92,7 +101,7 @@ def train_detector(model,
         meta=meta)
     # an ugly workaround to make .log and .log.json filenames the same
     runner.timestamp = timestamp
-
+    print(2)
     # fp16 setting
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
@@ -102,14 +111,14 @@ def train_detector(model,
         optimizer_config = OptimizerHook(**cfg.optimizer_config)
     else:
         optimizer_config = cfg.optimizer_config
-
+    print(3)
     # register hooks
     runner.register_training_hooks(cfg.lr_config, optimizer_config,
                                    cfg.checkpoint_config, cfg.log_config,
                                    cfg.get('momentum_config', None))
     if distributed:
         runner.register_hook(DistSamplerSeedHook())
-
+    print(4)
     # register eval hooks
     if validate:
         # Support batch_size > 1 in validation
@@ -128,7 +137,7 @@ def train_detector(model,
         eval_cfg = cfg.get('evaluation', {})
         eval_hook = DistEvalHook if distributed else EvalHook
         runner.register_hook(eval_hook(val_dataloader, **eval_cfg))
-
+    print(5)
     # user-defined hooks
     if cfg.get('custom_hooks', None):
         custom_hooks = cfg.custom_hooks
@@ -142,9 +151,10 @@ def train_detector(model,
             priority = hook_cfg.pop('priority', 'NORMAL')
             hook = build_from_cfg(hook_cfg, HOOKS)
             runner.register_hook(hook, priority=priority)
-
+    print(6)
     if cfg.resume_from:
         runner.resume(cfg.resume_from)
     elif cfg.load_from:
         runner.load_checkpoint(cfg.load_from)
+    print(7)
     runner.run(data_loaders, cfg.workflow, cfg.total_epochs)
