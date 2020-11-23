@@ -79,10 +79,57 @@ def parse_args():
     return args
 
 
+def select_training_param(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    model.roi_head.bbox_head.fc_cls.weight.requires_grad = True
+    model.roi_head.bbox_head.fc_cls.bias.requires_grad = True
+
+    return model
+
+
+def select_head(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for v in model.roi_head.bbox_head.parameters():
+        v.requires_grad = True
+
+    return model
+
+def select_cascade_cls_params(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for child in model.roi_head.bbox_head.children():
+        for v in child.fc_cls.parameters():
+            v.requires_grad = True
+
+    return model
+
+def select_mask_params(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    for v in model.bbox_head.parameters():
+        v.requires_grad = True
+    for v in model.mask_head.parameters():
+        v.requires_grad = True
+
+    return model
+
+
+
 def main():
     args = parse_args()
 
     cfg = Config.fromfile(args.config)
+    
     if args.cfg_options is not None:
         cfg.merge_from_dict(args.cfg_options)
     # import modules from string list.
@@ -161,9 +208,27 @@ def main():
         # checkpoints as meta data
         cfg.checkpoint_config.meta = dict(
             mmdet_version=__version__ + get_git_hash()[:7],
-            CLASSES=datasets[0].CLASSES)
+            CLASSES=datasets[0].CLASSES)    
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
+    
+    tune_part = cfg.get('selectp', 0)
+#     print("Tune part ---------------------->", tune_part)
+    if tune_part == 1:
+        print('Train fc_cls only.')
+        model = select_training_param(model)
+    elif tune_part == 2:
+        print('Train bbox head only.')
+        model = select_head(model)
+    elif tune_part == 3:
+        print('Train cascade fc_cls only.')
+        model = select_cascade_cls_params(model)
+    elif tune_part == 4:
+        print('Train bbox and mask head.')
+        model = select_mask_params(model)
+    else:
+        print('Train all params.')
+    
     train_detector(
         model,
         datasets,
@@ -176,3 +241,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+    
