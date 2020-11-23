@@ -195,10 +195,10 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/baseline_bags'
-# load_from = './data/pretrained_models/baseline_epoch_12.pth'
+work_dir = './work_dirs/updated_buckets_bags'
+load_from = './data/pretrained_models/baseline_epoch_12.pth'
 # load_from = None # '/teams/CSE291_FA20_J00/team2/transfer/epoch_5.pth'
-resume_from = './novalbags/epoch_10.pth'
+# resume_from = './novalbags/epoch_10.pth'
 workflow = [('train', 1)]
 
 # Train which part, 0 for all, 1 for cls, 2 for bbox_head
