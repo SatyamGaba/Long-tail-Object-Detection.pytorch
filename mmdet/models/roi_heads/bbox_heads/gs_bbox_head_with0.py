@@ -35,7 +35,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
         self.pred_slice = torch.load(gs_config.pred_slice).cuda()
-
+        self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
         # TODO: update this ugly implementation. Save fg_split to a list and
         #  load groups by gs_config.num_bins
         with open(gs_config.fg_split, 'rb') as fin:
@@ -66,13 +66,26 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         self.others_sample_ratio = gs_config.others_sample_ratio
 
 
-    def _sample_others(self, label):
+    def _sample_others(self, label,index):
 
         # only works for non bg-fg bins
 
+# <<<<<<< HEAD
         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
 #         fg = torch.where(label < 1203, torch.ones_like(label),
                          torch.zeros_like(label))
+# =======
+# #         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
+        label = label.long()        
+#         #print(self.softmaxWeights[index])
+#         a = self.softmaxWeights[index][label].double()
+#         #print(a)        
+#         b = torch.zeros_like(label).double()
+#         #print(a.shape,b.shape,label.shape)
+#         #print(type(a),type(b),type(label))
+#         fg = torch.where(label > 0, a, b)
+                           
+# >>>>>>> 32af204... RAGS and class-weighted BAGS code.
         fg_idx = fg.nonzero(as_tuple=True)[0]
         fg_num = fg_idx.shape[0]
         if fg_num == 0:
@@ -110,7 +123,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 weight = torch.ones_like(new_bin_label)
                 # weight = torch.zeros_like(new_bin_label)
             else:
-                weight = self._sample_others(new_bin_label)
+                weight = self._sample_others(new_bin_label,i)
             new_labels.append(new_bin_label)
             new_weights.append(weight)
             avg_factor = max(torch.sum(weight).float().item(), 1.)
@@ -185,12 +198,16 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), 4)[pos_inds]
             else:
                 pos_bbox_pred = bbox_pred.view(bbox_pred.size(0), -1, 4)[pos_inds, labels[pos_inds]]
-            losses['loss_bbox'] = self.loss_bbox(
-                pos_bbox_pred,
-                bbox_targets[pos_inds],
-                bbox_weights[pos_inds],
-                avg_factor=bbox_targets.size(0),
-                reduction_override=reduction_override)
+            if bbox_targets[pos_inds].numel() <= 0:
+                losses['loss_bbox'] = 0.0
+                print('0 target predictions')
+            else:
+                losses['loss_bbox'] = self.loss_bbox(
+                    pos_bbox_pred,
+                    bbox_targets[pos_inds],
+                    bbox_weights[pos_inds],
+                    avg_factor=bbox_targets.size(0),
+                    reduction_override=reduction_override)
         return losses
 
     @force_fp32(apply_to=('cls_score'))

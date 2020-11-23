@@ -10,8 +10,10 @@ from pycocotools.coco import COCO
 
 def get_cate_gs():
 
+    print('Loading')
     train_ann_file = './data/lvis_v1/annotations/lvis_v1_train.json'
     lvis_train = LVIS(train_ann_file)
+    print('Loaded')
     train_catsinfo = lvis_train.cats
 
 #     binlabel_count = [1, 1, 1, 1, 1]
@@ -42,15 +44,20 @@ def get_cate_gs():
     #label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
     label2binlabel[0, :-1] = binlabel_count[0]
     binlabel_count[0] += 1
-
+    
+    weights = [[1.0],[1.0],[1.0],[1.0],[1.0]]
+    group_instance_counts = [0,0,0,0,0]
     for cid, cate in train_catsinfo.items():
         ins_count = cate['instance_count']
         if ins_count < 10:
             label2binlabel[1, cid-1] = binlabel_count[1]
             binlabel_count[1] += 1
+            weights[1].append(1.0/ins_count)
+            group_instance_counts[1] += ins_count
         elif ins_count < 100:
             label2binlabel[2, cid-1] = binlabel_count[2]
             binlabel_count[2] += 1
+# <<<<<<< HEAD
         elif ins_count < 500:
             label2binlabel[3, cid-1] = binlabel_count[3]
             binlabel_count[3] += 1
@@ -62,6 +69,34 @@ def get_cate_gs():
             binlabel_count[5] += 1
 
 
+# # =======
+#             weights[2].append(1.0/ins_count)
+#             group_instance_counts[2] += ins_count
+#         elif ins_count < 1000:
+#             label2binlabel[3, cid-1] = binlabel_count[3]
+#             binlabel_count[3] += 1
+#             weights[3].append(1.0/ins_count)
+#             group_instance_counts[3] += ins_count
+#         else:
+#             label2binlabel[4, cid-1] = binlabel_count[4]
+#             binlabel_count[4] += 1
+#             weights[4].append(1.0/ins_count)
+#             group_instance_counts[4] += ins_count
+#     for i in range(5):
+#         while len(weights[i]) < 1204:
+#             weights[i].append(0.0)
+#         print(len(weights[i]))
+    
+#     for i in range(1,5):
+#         weights[i] = binlabel_count[i] * np.array(weights[i]) / np.sum(weights[i])
+#         weights[i][0] = 1.0
+        
+    
+#     weights = np.array(weights,dtype=np.float)
+#     print(weights)
+#     torch.save(torch.from_numpy(weights), './data/lvis_v1/softmaxWeights.pt')
+    
+# >>>>>>> 32af204... RAGS and class-weighted BAGS code.
     savebin = torch.from_numpy(label2binlabel)
 
     save_path = './data/lvis_v1/label2binlabel.pt'
@@ -1241,6 +1276,7 @@ def update_cls():
 
 if __name__ == '__main__':
 
+# <<<<<<< HEAD
     # ana_param()
     # get_mask()
     # trymapping()
@@ -1272,3 +1308,13 @@ if __name__ == '__main__':
 #     count_ins()
     # del_nondense_cls()
     # update_cls()
+# =======
+    # Original BAGS
+#     get_cate_gs()
+#     get_split()
+    
+    # Random BAGS
+#     get_cate_gs_random()
+#     get_split_random()
+    
+# >>>>>>> 32af204... RAGS and class-weighted BAGS code.
