@@ -146,11 +146,11 @@ class LVISEval:
                      for img_id in self.params.img_ids for cat_id in cat_ids}
 
         # loop through images, area range, max detection number
-            self.eval_imgs = [
-                self.evaluate_img(img_id, cat_id, area_rng) for cat_id in cat_ids
-                                                            for area_rng in self.params.area_rng
-                                                            for img_id in self.params.img_id]
-                
+        self.eval_imgs = [
+            self.evaluate_img(img_id, cat_id, area_rng) for cat_id in cat_ids
+                                                        for area_rng in self.params.area_rng
+                                                        for img_id in self.params.img_id]
+
     def _get_gt_dt(self, img_id, cat_id):
         """Create gt, dt which are list of anns/dets. If use_cats is true
         only anns/dets corresponding to tuple (img_id, cat_id) will be

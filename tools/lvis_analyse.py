@@ -14,8 +14,30 @@ def get_cate_gs():
     lvis_train = LVIS(train_ann_file)
     train_catsinfo = lvis_train.cats
 
-    binlabel_count = [1, 1, 1, 1, 1]
-    label2binlabel = np.zeros((5, 1204), dtype=np.int)
+#     binlabel_count = [1, 1, 1, 1, 1]
+#     label2binlabel = np.zeros((5, 1204), dtype=np.int)
+
+#     #label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
+#     label2binlabel[0, :-1] = binlabel_count[0]
+#     binlabel_count[0] += 1
+
+#     for cid, cate in train_catsinfo.items():
+#         ins_count = cate['instance_count']
+#         if ins_count < 10:
+#             label2binlabel[1, cid-1] = binlabel_count[1]
+#             binlabel_count[1] += 1
+#         elif ins_count < 100:
+#             label2binlabel[2, cid-1] = binlabel_count[2]
+#             binlabel_count[2] += 1
+#         elif ins_count < 1000:
+#             label2binlabel[3, cid-1] = binlabel_count[3]
+#             binlabel_count[3] += 1
+#         else:
+#             label2binlabel[4, cid-1] = binlabel_count[4]
+#             binlabel_count[4] += 1
+
+    binlabel_count = [1, 1, 1, 1, 1, 1]
+    label2binlabel = np.zeros((6, 1204), dtype=np.int)
 
     #label2binlabel[0, 1:] = binlabel_count[0]             # manually changed by Jessica
     label2binlabel[0, :-1] = binlabel_count[0]
@@ -29,12 +51,15 @@ def get_cate_gs():
         elif ins_count < 100:
             label2binlabel[2, cid-1] = binlabel_count[2]
             binlabel_count[2] += 1
-        elif ins_count < 1000:
+        elif ins_count < 500:
             label2binlabel[3, cid-1] = binlabel_count[3]
             binlabel_count[3] += 1
-        else:
+        elif ins_count < 1000:
             label2binlabel[4, cid-1] = binlabel_count[4]
             binlabel_count[4] += 1
+        else:
+            label2binlabel[5, cid-1] = binlabel_count[5]
+            binlabel_count[5] += 1
 
 
     savebin = torch.from_numpy(label2binlabel)
@@ -43,7 +68,8 @@ def get_cate_gs():
     torch.save(savebin, save_path)
 
     # start and length
-    pred_slice = np.zeros((5, 2), dtype=np.int)
+#     pred_slice = np.zeros((5, 2), dtype=np.int)
+    pred_slice = np.zeros((6, 2), dtype=np.int)
     start_idx = 0
     for i, bincount in enumerate(binlabel_count):
         pred_slice[i, 0] = start_idx
@@ -69,8 +95,36 @@ def get_split():
     train_catsinfo = lvis_train.cats
     # val_catsinfo = lvis_val.cats
 
+#     bin10 = []
+#     bin100 = []
+#     bin1000 = []
+#     binover = []
+
+#     for cid, cate in train_catsinfo.items():
+#         ins_count = cate['instance_count']
+#         if ins_count < 10:
+#             bin10.append(cid)
+#         elif ins_count < 100:
+#             bin100.append(cid)
+#         elif ins_count < 1000:
+#             bin1000.append(cid)
+#         else:
+#             binover.append(cid)
+
+#     splits = {}
+#     splits['(0, 10)'] = np.array(bin10, dtype=np.int)
+#     splits['[10, 100)'] = np.array(bin100, dtype=np.int)
+#     splits['[100, 1000)'] = np.array(bin1000, dtype=np.int)
+#     splits['[1000, ~)'] = np.array(binover, dtype=np.int)
+# #     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
+# #     splits['background'] = np.zeros((1,), dtype=np.int)
+#     splits['normal'] = np.arange(1203)
+#     splits['background'] = np.array([1203],)
+#     splits['all'] = np.arange(1204)
+
     bin10 = []
     bin100 = []
+    bin500 = []
     bin1000 = []
     binover = []
 
@@ -80,21 +134,26 @@ def get_split():
             bin10.append(cid)
         elif ins_count < 100:
             bin100.append(cid)
+        elif ins_count < 500:
+            bin500.append(cid)
         elif ins_count < 1000:
             bin1000.append(cid)
         else:
             binover.append(cid)
 
+
     splits = {}
     splits['(0, 10)'] = np.array(bin10, dtype=np.int)
     splits['[10, 100)'] = np.array(bin100, dtype=np.int)
-    splits['[100, 1000)'] = np.array(bin1000, dtype=np.int)
+    splits['[100, 500)'] = np.array(bin500, dtype=np.int)
+    splits['[500, 1000)'] = np.array(bin1000, dtype=np.int)
     splits['[1000, ~)'] = np.array(binover, dtype=np.int)
 #     splits['normal'] = np.arange(1, 1204)                         manually changed by Jessica
 #     splits['background'] = np.zeros((1,), dtype=np.int)
     splits['normal'] = np.arange(1203)
     splits['background'] = np.array([1203],)
     splits['all'] = np.arange(1204)
+
 
     split_file_name = './data/lvis_v1/valsplit.pkl'
     with open(split_file_name, 'wb') as f:

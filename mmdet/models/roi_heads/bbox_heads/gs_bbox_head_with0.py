@@ -41,10 +41,17 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         with open(gs_config.fg_split, 'rb') as fin:
             fg_split = pickle.load(fin)
 
+#         self.fg_splits = []
+#         self.fg_splits.append(torch.from_numpy(fg_split['(0, 10)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[10, 100)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[100, 1000)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[1000, ~)']).cuda())
+
         self.fg_splits = []
         self.fg_splits.append(torch.from_numpy(fg_split['(0, 10)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[10, 100)']).cuda())
-        self.fg_splits.append(torch.from_numpy(fg_split['[100, 1000)']).cuda())
+        self.fg_splits.append(torch.from_numpy(fg_split['[100, 500)']).cuda())
+        self.fg_splits.append(torch.from_numpy(fg_split['[500, 1000)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[1000, ~)']).cuda())
 
         # self.fg_splits.append(torch.from_numpy(fg_split['(0, 5)']).cuda())
@@ -63,8 +70,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         # only works for non bg-fg bins
 
-#         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
-        fg = torch.where(label < 1203, torch.ones_like(label),
+        fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
+#         fg = torch.where(label < 1203, torch.ones_like(label),
                          torch.zeros_like(label))
         fg_idx = fg.nonzero(as_tuple=True)[0]
         fg_num = fg_idx.shape[0]
