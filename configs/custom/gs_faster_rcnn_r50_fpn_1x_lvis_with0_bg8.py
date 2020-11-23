@@ -126,7 +126,8 @@ test_cfg = dict(
 )
 # dataset settings
 dataset_type = 'LVISV1Dataset'
-data_root = 'data/lvis_v1/'
+ann_root = '/cephfs-team2/tsircar/lt_od/data/lvis_v1/'
+data_root = '/shared/coco/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -159,17 +160,17 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_train.json',
+        ann_file= ann_root + 'annotations/lvis_v1_train.json',
         img_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_val.json',
+        ann_file= ann_root + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_val.json',
+        ann_file= ann_root + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
@@ -182,7 +183,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[8, 11])
-checkpoint_config = dict(start=0,interval=1)
+checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=50,
@@ -197,7 +198,7 @@ dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8'
 load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
-load_from = None # '/teams/CSE291_FA20_J00/team2/transfer/epoch_5.pth'
+load_from = './work_dirs/baseline_epoch_12.pth'
 resume_from = None
 workflow = [('train', 1)]
 

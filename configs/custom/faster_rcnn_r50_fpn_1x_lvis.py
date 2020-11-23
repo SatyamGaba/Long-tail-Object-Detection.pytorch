@@ -115,7 +115,7 @@ test_cfg = dict(
 )
 # dataset settings
 dataset_type = 'LVISV1Dataset'
-data_root = 'data/lvis_v1/'
+data_root = '/cephfs-team2/tsircar/BalancedGroupSoftmax/data/lvis/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -158,7 +158,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val.json',
+        ann_file=data_root + 'annotations/lvis_v1_val_g_mini.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
@@ -185,6 +185,6 @@ total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/bags_baseline'
-load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
+load_from = None#'./checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
 resume_from = None
 workflow = [('train', 1)]
