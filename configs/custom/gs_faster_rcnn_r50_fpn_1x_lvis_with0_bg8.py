@@ -48,7 +48,7 @@ model = dict(
                 others_sample_ratio=8.0,
                 loss_bg=dict(
                     type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-                num_bins=5,
+                num_bins=6,
                 loss_bin=dict(
                     type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
                 ),          
@@ -156,7 +156,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=2,
+    workers_per_gpu=0,
     train=dict(
         type=dataset_type,
         ann_file= data_root + 'annotations/lvis_v1_train.json',
@@ -169,7 +169,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file= data_root + 'annotations/lvis_v1_val.json',
+        ann_file= data_root + 'annotations/lvis_v1_val_subset.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer

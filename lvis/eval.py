@@ -11,14 +11,6 @@ from .results import LVISResults
 
 import sys
 
-def sizeof_fmt(num, suffix='B'):
-    ''' by Fred Cirera,  https://stackoverflow.com/a/1094933/1870254, modified'''
-    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
-        if abs(num) < 1024.0:
-            return "%3.1f %s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f %s%s" % (num, 'Yi', suffix)
-
 class LVISEval:
     def __init__(self, lvis_gt, lvis_dt, iou_type='segm'):
         """Constructor for LVISEval.
@@ -149,7 +141,7 @@ class LVISEval:
         self.eval_imgs = [
             self.evaluate_img(img_id, cat_id, area_rng) for cat_id in cat_ids
                                                         for area_rng in self.params.area_rng
-                                                        for img_id in self.params.img_id]
+                                                        for img_id in self.params.img_ids]
 
     def _get_gt_dt(self, img_id, cat_id):
         """Create gt, dt which are list of anns/dets. If use_cats is true

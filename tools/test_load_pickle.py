@@ -151,12 +151,12 @@ def main():
         # Replace 'ImageToTensor' to 'DefaultFormatBundle'
         cfg.data.test.pipeline = replace_ImageToTensor(cfg.data.test.pipeline)
     dataset = build_dataset(cfg.data.test)
-    data_loader = build_dataloader(
-        dataset,
-        samples_per_gpu=samples_per_gpu,
-        workers_per_gpu=cfg.data.workers_per_gpu,
-        dist=distributed,
-        shuffle=False)
+#     data_loader = build_dataloader(
+#         dataset,
+#         samples_per_gpu=samples_per_gpu,
+#         workers_per_gpu=cfg.data.workers_per_gpu,
+#         dist=distributed,
+#         shuffle=False)
 
     # build the model and load checkpoint
 #     model = build_detector(cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
@@ -185,7 +185,7 @@ def main():
 #         outputs = multi_gpu_test(model, data_loader, args.tmpdir,
 #                                  args.gpu_collect)
     
-    file = open("results_subsubset.pkl",'rb')
+    file = open("results_bags.pkl",'rb')
     outputs = pickle.load(file)
       
     rank, _ = get_dist_info()
