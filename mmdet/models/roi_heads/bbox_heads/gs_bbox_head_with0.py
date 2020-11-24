@@ -59,7 +59,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         self.others_sample_ratio = gs_config.others_sample_ratio
 
 
-    def _sample_others(self, label,index):
+    def _sample_others(self, label,index,weighted=True):
 
         # only works for non bg-fg bins
 
@@ -71,7 +71,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         b = torch.zeros_like(label).double()
         #print(a.shape,b.shape,label.shape)
         #print(type(a),type(b),type(label))
-        fg = torch.where(label > 0, a, b)
+        fg = torch.where(label > 0, torch.ones_like(label).double(), torch.zeros_like(label).double())
+        if weighted:
+            fg = torch.where(label > 0, a, b)
                            
         fg_idx = fg.nonzero(as_tuple=True)[0]
         fg_num = fg_idx.shape[0]
@@ -85,7 +87,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         bg_sample_num = int(fg_num * self.others_sample_ratio)
 
         if bg_sample_num >= bg_num:
-            weight = torch.ones_like(label)
+            weight = torch.where(label > 0, a, torch.ones_like(label).double())
         else:
             sample_idx = np.random.choice(bg_idx.cpu().numpy(),
                                           (bg_sample_num, ), replace=False)
@@ -110,7 +112,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 weight = torch.ones_like(new_bin_label)
                 # weight = torch.zeros_like(new_bin_label)
             else:
-                weight = self._sample_others(new_bin_label,i)
+                weight = self._sample_others(new_bin_label,i,weighted=False)
             new_labels.append(new_bin_label)
             new_weights.append(weight)
             avg_factor = max(torch.sum(weight).float().item(), 1.)
