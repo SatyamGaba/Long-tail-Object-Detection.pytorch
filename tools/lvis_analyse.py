@@ -7,7 +7,9 @@ import json
 import torch
 from pycocotools.coco import COCO
 import random
+import sys
 
+sys.path.append('../lvis')
 def get_cate_gs():
 
     print('Loading')
