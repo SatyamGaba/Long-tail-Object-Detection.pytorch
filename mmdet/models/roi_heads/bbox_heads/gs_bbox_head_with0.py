@@ -35,16 +35,23 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
         self.pred_slice = torch.load(gs_config.pred_slice).cuda()
-        self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
+#         self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
         # TODO: update this ugly implementation. Save fg_split to a list and
         #  load groups by gs_config.num_bins
         with open(gs_config.fg_split, 'rb') as fin:
             fg_split = pickle.load(fin)
 
+#         self.fg_splits = []
+#         self.fg_splits.append(torch.from_numpy(fg_split['(0, 10)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[10, 100)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[100, 1000)']).cuda())
+#         self.fg_splits.append(torch.from_numpy(fg_split['[1000, ~)']).cuda())
+
         self.fg_splits = []
         self.fg_splits.append(torch.from_numpy(fg_split['(0, 10)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[10, 100)']).cuda())
-        self.fg_splits.append(torch.from_numpy(fg_split['[100, 1000)']).cuda())
+        self.fg_splits.append(torch.from_numpy(fg_split['[100, 500)']).cuda())
+        self.fg_splits.append(torch.from_numpy(fg_split['[500, 1000)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[1000, ~)']).cuda())
 
         # self.fg_splits.append(torch.from_numpy(fg_split['(0, 5)']).cuda())
@@ -65,12 +72,16 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
 #         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
         label = label.long()        
-        #print(self.softmaxWeights[index])
-        a = self.softmaxWeights[index][label].double()
+#         print(self.softmaxWeights[index])
+#         a = self.softmaxWeights[index][label].double()
         #print(a)        
-        b = torch.zeros_like(label).double()
-        #print(a.shape,b.shape,label.shape)
+#         b = torch.zeros_like(label).double()
+#         print(a.shape,b.shape,label.shape)
         #print(type(a),type(b),type(label))
+    
+        a = torch.ones_like(label).double()
+        b = torch.zeros_like(label).double()
+    
         fg = torch.where(label > 0, torch.ones_like(label).double(), torch.zeros_like(label).double())
         if weighted:
             fg = torch.where(label > 0, a, b)
