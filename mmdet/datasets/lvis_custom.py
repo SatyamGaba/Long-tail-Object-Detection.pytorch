@@ -357,9 +357,9 @@ class LVISV05Dataset(CocoDataset):
                               'install mmlvis to install open-mmlab forked '
                               'lvis.')
         assert isinstance(results, list), 'results must be a list'
-        assert len(results) == len(self), (
-            'The length of results is not equal to the dataset len: {} != {}'.
-            format(len(results), len(self)))
+#         assert len(results) == len(self), (
+#             'The length of results is not equal to the dataset len: {} != {}'.
+#             format(len(results), len(self)))
 
         metrics = metric if isinstance(metric, list) else [metric]
         allowed_metrics = ['bbox', 'segm', 'proposal', 'proposal_fast']
