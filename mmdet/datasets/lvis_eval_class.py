@@ -324,11 +324,6 @@ class LVISEval:
 
         # Initialize dt_pointers
         dt_pointers = {}
-        #for cat_idx in range(num_cats):
-        #    dt_pointers[cat_idx] = {}
-        #    for area_idx in range(num_area_rngs):
-        #        dt_pointers[cat_idx][area_idx] = {}
-        print('Step 2A')
         # Per category evaluation
         for cat_idx in range(num_cats):
             Nk = cat_idx * num_area_rngs * num_imgs
@@ -373,7 +368,6 @@ class LVISEval:
                 #    "tps": tps,
                 #    "fps": fps,
                 #}
-
                 for iou_thr_idx, (tp, fp) in enumerate(zip(tp_sum, fp_sum)):
                     tp = np.array(tp)
                     fp = np.array(fp)
@@ -417,7 +411,7 @@ class LVISEval:
             "date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "precision": precision,
             "recall": recall,
-            "dt_pointers": dt_pointers,
+#             "dt_pointers": dt_pointers,
         }
 
     def _summarize(
