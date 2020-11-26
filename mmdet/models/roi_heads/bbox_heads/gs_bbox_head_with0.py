@@ -87,7 +87,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         bg_sample_num = int(fg_num * self.others_sample_ratio)
 
         if bg_sample_num >= bg_num:
-            weight = torch.where(label > 0, a, torch.ones_like(label).double())
+            weight = torch.ones_like(label).double()
+            if weighted:
+                weight = torch.where(label > 0, a, torch.ones_like(label).double())
         else:
             sample_idx = np.random.choice(bg_idx.cpu().numpy(),
                                           (bg_sample_num, ), replace=False)
