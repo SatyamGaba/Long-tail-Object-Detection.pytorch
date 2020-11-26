@@ -9,7 +9,7 @@ from mmcv.runner import force_fp32
 from mmdet.core import multiclass_nms
 from mmdet.models.builder import HEADS, build_loss
 from .convfc_bbox_head import Shared2FCBBoxHead
-
+from mmdet.models.losses.center_loss import CenterLoss
 
 @HEADS.register_module()
 class GSBBoxHeadWith0(Shared2FCBBoxHead):
@@ -29,12 +29,19 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         # self.loss_bg = build_loss(gs_config.loss_bg)
 
-        self.loss_bins = []
-        for i in range(gs_config.num_bins):
-            self.loss_bins.append(build_loss(gs_config.loss_bin))
-
-        self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
         self.pred_slice = torch.load(gs_config.pred_slice).cuda()
+        num_bins = self.pred_slice.shape[0]
+        self.bin_sizes = []
+        for i in range(num_bins):
+            bin_size = self.pred_slice[i, 1]
+            self.bin_sizes.append(bin_size)
+        
+        self.loss_bins = []
+        self.loss_center_bins = []
+        for i in range(gs_config.num_bins):
+            self.loss_center_bins.append(CenterLoss(self.bin_sizes[i],1024,use_gpu=True))
+            self.loss_bins.append(build_loss(gs_config.loss_bin))
+        self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
         self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
         # TODO: update this ugly implementation. Save fg_split to a list and
         #  load groups by gs_config.num_bins
@@ -46,7 +53,6 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         self.fg_splits.append(torch.from_numpy(fg_split['[10, 100)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[100, 1000)']).cuda())
         self.fg_splits.append(torch.from_numpy(fg_split['[1000, ~)']).cuda())
-
         # self.fg_splits.append(torch.from_numpy(fg_split['(0, 5)']).cuda())
         # self.fg_splits.append(torch.from_numpy(fg_split['(5, 10)']).cuda())
         # self.fg_splits.append(torch.from_numpy(fg_split['[10, 50)']).cuda())
@@ -57,7 +63,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
         # self.fg_splits.append(torch.from_numpy(fg_split['[5000, ~)']).cuda())
 
         self.others_sample_ratio = gs_config.others_sample_ratio
-
+        
 
     def _sample_others(self, label,index,weighted=True):
 
@@ -165,12 +171,16 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
              bbox_targets,
              bbox_weights,
              reduction_override=None):
-
+        #print('Feature shape inside loss function: ',self.features[0][:10])
         losses = dict()
         if cls_score is not None:
 
             # Original label_weights is 1 for each roi.
             new_labels, new_weights, new_avgfactors = self._remap_labels(labels)
+            
+            # Get the features which were extracted during the foward call
+            features = self.features
+
             new_preds = self._slice_preds(cls_score)
 
             num_bins = len(new_labels)
@@ -182,6 +192,12 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     avg_factor=new_avgfactors[i],
                     reduction_override=reduction_override
                 )
+                losses['loss_cls_bin{}'.format(i)] += 0.5 * self.loss_center_bins[i](self.features, new_labels[i])
+                #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
+                #centerL = self.loss_center_bins[i](self.features, new_labels[i])
+                #print('Losses shape ', i, reduction_override, losses['loss_cls_bin{}'.format(i)], losses['loss_cls_bin{}'.format(i)].shape, self.features.shape)
+                #print('Center Loss: ', centerL, centerL.shape)
+                
 
         if bbox_pred is not None:
             pos_inds = (labels >= 0) & (labels < 1203) # manually modified

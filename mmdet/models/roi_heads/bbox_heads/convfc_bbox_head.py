@@ -167,7 +167,8 @@ class ConvFCBBoxHead(BBoxHead):
             x_reg = x_reg.flatten(1)
         for fc in self.reg_fcs:
             x_reg = self.relu(fc(x_reg))
-
+        self.features = x_cls
+        #print('Features shape while computing cls_scores: ', x_cls[0][:10])
         cls_score = self.fc_cls(x_cls) if self.with_cls else None
         bbox_pred = self.fc_reg(x_reg) if self.with_reg else None
         return cls_score, bbox_pred

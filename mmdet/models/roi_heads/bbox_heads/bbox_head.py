@@ -76,7 +76,10 @@ class BBoxHead(nn.Module):
     def forward(self, x):
         if self.with_avg_pool:
             x = self.avg_pool(x)
+        self.features = x
+        print('Feature shapes before re-shaping: ', x.shape)
         x = x.view(x.size(0), -1)
+        print('Feature shapes after re-shaping: ', x.shape)
         cls_score = self.fc_cls(x) if self.with_cls else None
         bbox_pred = self.fc_reg(x) if self.with_reg else None
         return cls_score, bbox_pred
