@@ -107,6 +107,11 @@ def build_optimizer(model, optimizer_cfg):
 
             params.append(param_group)
 
+        # Add center loss parameters to the list
+        for loss_center_bin in model.roi_head.bbox_head.loss_center_bins:
+            param_group = {'params': [loss_center_bin.parameters()]}
+            params.append(param_group)
+
         optimizer_cls = getattr(torch.optim, optimizer_cfg.pop('type'))
         return optimizer_cls(params, **optimizer_cfg)
 

@@ -192,9 +192,10 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     avg_factor=new_avgfactors[i],
                     reduction_override=reduction_override
                 )
-                losses['loss_cls_bin{}'.format(i)] += 0.5 * self.loss_center_bins[i](self.features, new_labels[i])
+                losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_center_bins[i](self.features, new_labels[i])
                 #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
                 #centerL = self.loss_center_bins[i](self.features, new_labels[i])
+                #print('Loss: ', centerL, losses['loss_cls_bin{}'.format(i)])
                 #print('Losses shape ', i, reduction_override, losses['loss_cls_bin{}'.format(i)], losses['loss_cls_bin{}'.format(i)].shape, self.features.shape)
                 #print('Center Loss: ', centerL, centerL.shape)
                 
