@@ -137,8 +137,7 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
             x[:self.bbox_roi_extractor.num_inputs], rois)
         if self.with_shared_head:
             bbox_feats = self.shared_head(bbox_feats)
-        cls_score, bbox_pred = self.bbox_head(bbox_feats)
-
+        cls_score, bbox_pred = self.bbox_head(bbox_feats)   
         bbox_results = dict(
             cls_score=cls_score, bbox_pred=bbox_pred, bbox_feats=bbox_feats)
         return bbox_results
@@ -242,10 +241,11 @@ class StandardRoIHead(BaseRoIHead, BBoxTestMixin, MaskTestMixin):
                     proposals=None,
                     rescale=False):
         """Test without augmentation."""
-        assert self.with_bbox, 'Bbox head must be implemented.'
+        assert self.with_bbox, 'Bbox head must be implemented'
 
         det_bboxes, det_labels = self.simple_test_bboxes(
             x, img_metas, proposal_list, self.test_cfg, rescale=rescale)
+        print("DETE: ",det_labels[0].shape)
         bbox_results = [
             bbox2result(det_bboxes[i], det_labels[i],
                         self.bbox_head.num_classes)

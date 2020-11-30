@@ -115,7 +115,7 @@ test_cfg = dict(
 )
 # dataset settings
 dataset_type = 'LVISV1Dataset'
-data_root = '/cephfs-team2/tsircar/BalancedGroupSoftmax/data/lvis/'
+data_root = 'data/lvis_v1/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -158,7 +158,7 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val_g_mini.json',
+        ann_file=data_root + 'annotations/lvis_v1_val_cat_subset.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer

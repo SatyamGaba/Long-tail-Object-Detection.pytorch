@@ -10,6 +10,7 @@ def multiclass_nms(multi_bboxes,
                    nms_cfg,
                    max_num=-1,
                    score_factors=None):
+    print("In mmdet/core/post_processing/bbox_nms, n: ", multi_bboxes.shape, multi_bboxes)
     """NMS for multi-class bboxes.
 
     Args:

@@ -193,6 +193,7 @@ class BBoxHead(nn.Module):
                    scale_factor,
                    rescale=False,
                    cfg=None):
+        
         if isinstance(cls_score, list):
             cls_score = sum(cls_score) / float(len(cls_score))
         scores = F.softmax(cls_score, dim=1) if cls_score is not None else None
@@ -214,6 +215,12 @@ class BBoxHead(nn.Module):
                 bboxes = (bboxes.view(bboxes.size(0), -1, 4) /
                           scale_factor).view(bboxes.size()[0], -1)
 
+        # overwrite your own boxes and scores
+#         print("In mmdet/models/roi_heads/bbox_heads/bbox_head.py, bbox_pred 3:",  bboxes.shape, bboxes)
+#         bboxes = bboxes[:100, :]
+#         scores = scores[:100, :]
+#         print(torch.sum(scores, dim =1))
+        
         if cfg is None:
             return bboxes, scores
         else:
