@@ -288,11 +288,11 @@ class LVISV05Dataset(CocoDataset):
                               'install mmlvis to install open-mmlab forked '
                               'lvis.')
         self.coco = LVIS(ann_file)
-        assert not self.custom_classes, 'LVIS custom classes is not supported'
+#         assert not self.custom_classes, 'LVIS custom classes is not supported'
         self.cat_ids = self.coco.get_cat_ids()
-        print('Cat IDS: ',self.cat_ids)
+#         print('Cat IDS: ',self.cat_ids)
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
-        self.img_ids = self.coco.get_img_ids()[:100]
+        self.img_ids = self.coco.get_img_ids()
         data_infos = []
         for i in self.img_ids:
             info = self.coco.load_imgs([i])[0]
@@ -351,11 +351,10 @@ class LVISV05Dataset(CocoDataset):
             raise ImportError('Package lvis is not installed. Please run pip '
                               'install mmlvis to install open-mmlab forked '
                               'lvis.')
-        print('Step 1')
         assert isinstance(results, list), 'results must be a list'
-        assert len(results) == len(self), (
-            'The length of results is not equal to the dataset len: {} != {}'.
-            format(len(results), len(self)))
+#         assert len(results) == len(self), (
+#             'The length of results is not equal to the dataset len: {} != {}'.
+#             format(len(results), len(self)))
 
         metrics = metric if isinstance(metric, list) else [metric]
         allowed_metrics = ['bbox', 'segm', 'proposal', 'proposal_fast']
@@ -368,12 +367,9 @@ class LVISV05Dataset(CocoDataset):
             jsonfile_prefix = osp.join(tmp_dir.name, 'results')
         else:
             tmp_dir = None
-        print('Step 2')
         cat_ids_copy = self.cat_ids.copy()
         self.cat_ids = list(range(1,1204))
-        print('CP 0...')
         result_files = self.results2json(results, jsonfile_prefix)
-        print('CP 1...')
         self.cat_ids = cat_ids_copy
         eval_results = {}
         # get original api
@@ -748,7 +744,7 @@ class LVISV1Dataset(LVISDataset):
         self.cat_ids = self.coco.get_cat_ids()
         self.cat2label = {cat_id: i for i, cat_id in enumerate(self.cat_ids)}
         self.img_ids = self.coco.get_img_ids()
-        print('Cat IDS1: ',self.cat_ids)
+#         print('Cat IDS1: ',self.cat_ids)
         data_infos = []
         for i in self.img_ids:
             info = self.coco.load_imgs([i])[0]
