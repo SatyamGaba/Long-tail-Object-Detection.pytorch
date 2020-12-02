@@ -9,8 +9,7 @@ from mmcv.runner import force_fp32
 from mmdet.core import multiclass_nms
 from mmdet.models.builder import HEADS, build_loss
 from .convfc_bbox_head import Shared2FCBBoxHead
-from mmdet.models.losses.cos_loss import CenterLoss
-# from mmdet.models.losses.cos_loss import CosLoss
+from mmdet.models.losses.cos_loss import CosLoss
 
 @HEADS.register_module()
 class GSBBoxHeadWith0(Shared2FCBBoxHead):
@@ -25,11 +24,15 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                                          *args,
                                          **kwargs)
         # 1232, 0 for background, 1231 for foreground
-        self.fc_cls = nn.Linear(self.cls_last_dim,
-                                self.num_classes + gs_config.num_bins + 1)
+        ## cos loss
+#         self.cos_loss = CosLoss(in_features=self.cls_last_dim, out_features=self.num_classes + gs_config.num_bins + 1, eps=1e-7, s=30.0, m=0.4).cuda()
+#         cls_score = self.cos_loss.fc_cls(x_cls) if self.with_cls else None
+#         self.fc_cls = self.cos_loss.fc_cls
+#         self.fc_cls = nn.Linear(self.cls_last_dim,
+#                                 self.num_classes + gs_config.num_bins + 1)
 
         # self.loss_bg = build_loss(gs_config.loss_bg)
-
+        self.gs_config = gs_config
         self.pred_slice = torch.load(gs_config.pred_slice).cuda()
         num_bins = self.pred_slice.shape[0]
         self.bin_sizes = []
@@ -38,9 +41,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
             self.bin_sizes.append(bin_size)
         
         self.loss_bins = []
-        self.loss_center_bins = []
+        self.loss_cos_bins = []
         for i in range(gs_config.num_bins):
-            self.loss_center_bins.append(CenterLoss(self.bin_sizes[i],1024,use_gpu=True))
+            self.loss_cos_bins.append(CosLoss(self.cls_last_dim, self.bin_sizes[i]))
             self.loss_bins.append(build_loss(gs_config.loss_bin))
         self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
         self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
@@ -65,6 +68,51 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         self.others_sample_ratio = gs_config.others_sample_ratio
         
+    def forward(self, x):
+        # shared part
+        if self.num_shared_convs > 0:
+            for conv in self.shared_convs:
+                x = conv(x)
+
+        if self.num_shared_fcs > 0:
+            if self.with_avg_pool:
+                x = self.avg_pool(x)
+
+            x = x.flatten(1)
+
+            for fc in self.shared_fcs:
+                x = self.relu(fc(x))
+        # separate branches
+        x_cls = x
+        x_reg = x
+
+        for conv in self.cls_convs:
+            x_cls = conv(x_cls)
+        if x_cls.dim() > 2:
+            if self.with_avg_pool:
+                x_cls = self.avg_pool(x_cls)
+            x_cls = x_cls.flatten(1)
+        for fc in self.cls_fcs:
+            x_cls = self.relu(fc(x_cls))
+
+        for conv in self.reg_convs:
+            x_reg = conv(x_reg)
+        if x_reg.dim() > 2:
+            if self.with_avg_pool:
+                x_reg = self.avg_pool(x_reg)
+            x_reg = x_reg.flatten(1)
+        for fc in self.reg_fcs:
+            x_reg = self.relu(fc(x_reg))
+        self.features = x_cls
+        #print('Features shape while computing cls_scores: ', x_cls[0][:10])
+        cls_score_bins = []
+        for i in range(self.gs_config.num_bins):
+            cls_score_bins.append(self.loss_cos_bins[i].fc(x_cls))
+         
+        cls_score = torch.cat(cls_score_bins, 1)        
+#         cls_score = self.fc_cls(x_cls) if self.with_cls else None
+        bbox_pred = self.fc_reg(x_reg) if self.with_reg else None
+        return cls_score, bbox_pred    
 
     def _sample_others(self, label,index,weighted=True):
 
@@ -194,9 +242,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     reduction_override=reduction_override
                 )
 #                 print("FEAT and LAB :", self.features.shape, new_labels[i])
-                losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_center_bins[i](self.features, new_labels[i])
+                losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_cos_bins[i](self.features, new_labels[i])
                 #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
-                #centerL = self.loss_center_bins[i](self.features, new_labels[i])
+                #centerL = self.loss_cos_bins[i](self.features, new_labels[i])
                 #print('Loss: ', centerL, losses['loss_cls_bin{}'.format(i)])
                 #print('Losses shape ', i, reduction_override, losses['loss_cls_bin{}'.format(i)], losses['loss_cls_bin{}'.format(i)].shape, self.features.shape)
                 #print('Center Loss: ', centerL, centerL.shape)

@@ -123,9 +123,9 @@ def train_detector(model,
                    validate=False,
                    timestamp=None,
                    meta=None):
-    print('Inside train detector...')
-    print(model.roi_head.bbox_head.loss_center_bins[0].parameters())
-    print('Done printing...')
+#     print('Inside train detector...')
+#     print(model.roi_head.bbox_head.loss_center_bins[0].parameters())
+#     print('Done printing...')
     logger = get_root_logger(cfg.log_level)
 
     # prepare data loaders
