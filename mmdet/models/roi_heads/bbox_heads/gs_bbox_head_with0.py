@@ -9,7 +9,8 @@ from mmcv.runner import force_fp32
 from mmdet.core import multiclass_nms
 from mmdet.models.builder import HEADS, build_loss
 from .convfc_bbox_head import Shared2FCBBoxHead
-from mmdet.models.losses.center_loss import CenterLoss
+from mmdet.models.losses.cos_loss import CenterLoss
+# from mmdet.models.losses.cos_loss import CosLoss
 
 @HEADS.register_module()
 class GSBBoxHeadWith0(Shared2FCBBoxHead):
@@ -192,6 +193,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     avg_factor=new_avgfactors[i],
                     reduction_override=reduction_override
                 )
+#                 print("FEAT and LAB :", self.features.shape, new_labels[i])
                 losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_center_bins[i](self.features, new_labels[i])
                 #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
                 #centerL = self.loss_center_bins[i](self.features, new_labels[i])
