@@ -88,7 +88,6 @@ def select_training_param(model):
 
     return model
 
-
 def select_head(model):
 
     for v in model.parameters():
@@ -210,6 +209,9 @@ def main():
     
     tune_part = cfg.get('selectp', 0)
 #     print("Tune part ---------------------->", tune_part)
+    if tune_part == -1:
+        print('No training.')
+        model.eval()
     if tune_part == 1:
         print('Train fc_cls only.')
         model = select_training_param(model)
@@ -233,6 +235,15 @@ def main():
         validate=(not args.no_validate),
         timestamp=timestamp,
         meta=meta)
+    print("Saving Features")
+    feature_list = model.roi_head.bbox_head.feature_store #.GSBBoxHeadWith0
+    import uuid
+    import pickle
+    uid =  uuid.uuid4()
+    filename = cfg.work_dir + "/feature_" + str(uid) + ".pkl"
+    with open(filename, 'wb') as f:
+        pickle.dump(feature_list, f)
+    print("Saved features")
 
 
 if __name__ == '__main__':

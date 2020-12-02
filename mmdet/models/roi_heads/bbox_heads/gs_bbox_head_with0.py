@@ -42,7 +42,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
             self.loss_center_bins.append(CenterLoss(self.bin_sizes[i],1024,use_gpu=True))
             self.loss_bins.append(build_loss(gs_config.loss_bin))
         self.label2binlabel = torch.load(gs_config.label2binlabel).cuda()
-        self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
+#         self.softmaxWeights = torch.load('./data/lvis_v1/softmaxWeights.pt').cuda()
         # TODO: update this ugly implementation. Save fg_split to a list and
         #  load groups by gs_config.num_bins
         with open(gs_config.fg_split, 'rb') as fin:
@@ -64,6 +64,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 
         self.others_sample_ratio = gs_config.others_sample_ratio
         
+        self.feature_store = []
+        
 
     def _sample_others(self, label,index,weighted=True):
 
@@ -72,9 +74,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 #         fg = torch.where(label > 0, torch.ones_like(label),              # manually changed by Jessica
         label = label.long()        
         #print(self.softmaxWeights[index])
-        a = self.softmaxWeights[index][label].double()
+#         a = self.softmaxWeights[index][label].double()
         #print(a)        
-        b = torch.zeros_like(label).double()
+#         b = torch.zeros_like(label).double()
         #print(a.shape,b.shape,label.shape)
         #print(type(a),type(b),type(label))
         fg = torch.where(label > 0, torch.ones_like(label).double(), torch.zeros_like(label).double())
@@ -170,17 +172,19 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
              label_weights,
              bbox_targets,
              bbox_weights,
-             reduction_override=None):
+             reduction_override=None
+             ):
         #print('Feature shape inside loss function: ',self.features[0][:10])
         losses = dict()
         if cls_score is not None:
 
             # Original label_weights is 1 for each roi.
             new_labels, new_weights, new_avgfactors = self._remap_labels(labels)
-            
             # Get the features which were extracted during the foward call
             features = self.features
-
+            
+            self.feature_store.append((features, labels))
+            
             new_preds = self._slice_preds(cls_score)
 
             num_bins = len(new_labels)
@@ -192,7 +196,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     avg_factor=new_avgfactors[i],
                     reduction_override=reduction_override
                 )
-                losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_center_bins[i](self.features, new_labels[i])
+                losses['loss_cls_bin{}'.format(i)] += 0.0001*self.loss_center_bins[i](self.features, new_labels[i])
                 #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
                 #centerL = self.loss_center_bins[i](self.features, new_labels[i])
                 #print('Loss: ', centerL, losses['loss_cls_bin{}'.format(i)])

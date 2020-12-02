@@ -160,7 +160,7 @@ data = dict(
     workers_per_gpu=2,
     train=dict(
         type=dataset_type,
-        ann_file= ann_root + 'annotations/lvis_v1_val.json',
+        ann_file= ann_root + 'annotations/lvis_v1_val_subset_of_subset.json',
         img_prefix=data_root,
         pipeline=train_pipeline),
     val=dict(
@@ -193,14 +193,14 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 1
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_naive'
-load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
-load_from = './work_dirs/baseline_epoch_12.pth'
+work_dir = './work_dirs/test_features'
+# load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
+load_from = './data/pretrained_models/baseline_epoch_12.pth' # change to 12th epoch of trained model.
 resume_from = None
 workflow = [('train', 1)]
 
 # Train which part, 0 for all, 1 for cls, 2 for bbox_head
-selectp = 1
+selectp = -1
