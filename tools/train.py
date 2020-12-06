@@ -7,6 +7,7 @@ import warnings
 
 import mmcv
 import torch
+import numpy as np
 from mmcv import Config, DictAction
 from mmcv.runner import init_dist
 from mmcv.utils import get_git_hash
@@ -122,6 +123,13 @@ def select_mask_params(model):
 
     return model
 
+def select_no_params(model):
+
+    for v in model.parameters():
+        v.requires_grad = False
+
+    return model
+
 def main():
     args = parse_args()
 
@@ -222,6 +230,9 @@ def main():
     elif tune_part == 4:
         print('Train bbox and mask head.')
         model = select_mask_params(model)
+    elif tune_part == 5:
+        print('Train nothing.')
+        model = select_no_params(model)
     else:
         print('Train all params.')
 
@@ -233,6 +244,11 @@ def main():
         validate=(not args.no_validate),
         timestamp=timestamp,
         meta=meta)
+    feat_dir = "features/cos_loss/"
+    os.makedirs(feat_dir, exist_ok=True)
+    np.save(os.path.join(feat_dir, f"features_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.features_list))
+    np.save(os.path.join(feat_dir, f"labels_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.labels_list))
+    
 
 
 if __name__ == '__main__':

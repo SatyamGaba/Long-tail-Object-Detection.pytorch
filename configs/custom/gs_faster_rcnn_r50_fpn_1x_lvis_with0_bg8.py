@@ -182,7 +182,7 @@ lr_config = dict(
     warmup_iters=500,
     warmup_ratio=1.0 / 3,
     step=[8, 11])
-checkpoint_config = dict(interval=2)
+checkpoint_config = dict(interval=1)
 # yapf:disable
 log_config = dict(
     interval=500,
@@ -192,14 +192,15 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 12
+total_epochs = 1
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_naive'
+work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_cos_loss'
 # load_from = './checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
-load_from = './checkpoints/trained/baseline_epoch_12.pth'
+# load_from = './checkpoints/trained/baseline_epoch_12.pth'
+load_from = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_naive/latest.pth'
 resume_from = None
 workflow = [('train', 1)]
 
-# Train which part, 0 for all, 1 for cls, 2 for bbox_head
+# Train which part, 0 for all, 1 for cls, 2 for bbox_head, 5 for none
 selectp = 1
