@@ -83,13 +83,21 @@ def select_training_param(cfg, model):
 
     for v in model.parameters():
         v.requires_grad = False
-
-    model.roi_head.bbox_head.fc_cls.weight.requires_grad = True
-    model.roi_head.bbox_head.fc_cls.bias.requires_grad = True
+    try:
+        model.roi_head.bbox_head.fc_cls.weight.requires_grad = True
+    except:
+        pass
+    try:
+        model.roi_head.bbox_head.fc_cls.bias.requires_grad = True
+    except:
+        pass
+    try:
+        for i in range(cfg.model.roi_head.bbox_head.gs_config.num_bins):
+            model.roi_head.bbox_head.loss_cos_bins[i].fc.weight.requires_grad = True
+    except:
+        print("loss_cos_biin not found")
+        pass
     
-    for i in range(cfg.model.roi_head.bbox_head.gs_config.num_bins):
-        model.roi_head.bbox_head.loss_cos_bins[i].fc.weight.requires_grad = True
-
     return model
 
 
