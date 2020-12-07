@@ -50,7 +50,7 @@ model = dict(
                 target_stds=[0.1, 0.1, 0.2, 0.2]),
             reg_class_agnostic=False,
             loss_cls=dict(
-                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                type='EuclideanCrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, num_classes = 1204, temperature = 1),
             loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))))
 # model training and testing settings
 train_cfg = dict(
@@ -115,7 +115,7 @@ test_cfg = dict(
 )
 # dataset settings
 dataset_type = 'LVISV1Dataset'
-data_root = '/cephfs-team2/tsircar/BalancedGroupSoftmax/data/lvis/'
+data_root = 'data/lvis_v1/'
 img_norm_cfg = dict(
     mean=[123.675, 116.28, 103.53], std=[58.395, 57.12, 57.375], to_rgb=True)
 train_pipeline = [
@@ -145,7 +145,7 @@ test_pipeline = [
 ]
 data = dict(
     samples_per_gpu=2,
-    workers_per_gpu=2,
+    workers_per_gpu=4,
     train=dict(
         type=dataset_type,
         ann_file=data_root + 'annotations/lvis_v1_train.json',
@@ -158,11 +158,11 @@ data = dict(
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
-        ann_file=data_root + 'annotations/lvis_v1_val_g_mini.json',
+        ann_file=data_root + 'annotations/lvis_v1_val.json',
         img_prefix=data_root,
         pipeline=test_pipeline))
 # optimizer
-optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=0.005, momentum=0.9, weight_decay=0.0001)
 optimizer_config = dict(grad_clip=dict(max_norm=35, norm_type=2))
 # learning policy
 lr_config = dict(
@@ -184,7 +184,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/bags_baseline'
-load_from = None#'./checkpoints/faster_rcnn_r50_fpn_2x_coco_bbox_mAP-0.384_20200504_210434-a5d8aa15.pth'
+work_dir = './work_dirs/baseline_euclid_ce_t=1'
+load_from = './checkpoints/trained/baseline_epoch_12.pth'
 resume_from = None
 workflow = [('train', 1)]

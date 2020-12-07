@@ -1,7 +1,11 @@
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import ConvModule
 
+from mmdet.core import build_bbox_coder, multi_apply, multiclass_nms
 from mmdet.models.builder import HEADS
+from mmdet.models.losses import accuracy
 from .bbox_head import BBoxHead
 
 
@@ -74,6 +78,7 @@ class ConvFCBBoxHead(BBoxHead):
                 self.reg_last_dim *= self.roi_feat_area
         
         self.relu = nn.ReLU(inplace=True)
+        
         # reconstruct fc_cls and fc_reg since input channels are changed
         if self.with_cls:
             self.fc_cls = nn.Linear(self.cls_last_dim, self.num_classes + 1)
@@ -173,7 +178,7 @@ class ConvFCBBoxHead(BBoxHead):
         bbox_pred = self.fc_reg(x_reg) if self.with_reg else None
         return cls_score, bbox_pred
 
-
+    
 @HEADS.register_module()
 class Shared2FCBBoxHead(ConvFCBBoxHead):
 
