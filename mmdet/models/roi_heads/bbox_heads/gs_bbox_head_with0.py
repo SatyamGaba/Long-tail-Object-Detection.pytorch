@@ -41,8 +41,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
             self.bin_sizes.append(bin_size)
         
         ## save features and labels
-        self.features_list = []
-        self.labels_list = []
+#         self.features_list = []
+#         self.labels_list = []
         
 #         self.loss_bins = []
         self.loss_cos_bins = []
@@ -224,15 +224,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
              bbox_targets,
              bbox_weights,
              reduction_override=None):
-        #print('Feature shape inside loss function: ',self.features[0][:10])
-#         print("==========================")
-#         print("self.features: ", self.features.shape, self.features)
-#         print("labels: ", labels.shape, labels)
-#         print("==========================")
-        
         ## save features and labels
-        self.features_list.append(self.features.detach().cpu().numpy())
-        self.labels_list.append(labels.detach().cpu().numpy())
+#         self.features_list.append(self.features.detach().cpu().numpy())
+#         self.labels_list.append(labels.detach().cpu().numpy())
         
         losses = dict()
         if cls_score is not None:
@@ -254,13 +248,8 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
 #                     avg_factor=new_avgfactors[i],
 #                     reduction_override=reduction_override
 #                 )
-#                 print("FEAT and LAB :", self.features.shape, new_labels[i])
                 losses['loss_cls_bin{}'.format(i)] = self.loss_cos_bins[i](self.features, new_labels[i])
-                #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
-                #centerL = self.loss_cos_bins[i](self.features, new_labels[i])
-                #print('Loss: ', centerL, losses['loss_cls_bin{}'.format(i)])
-                #print('Losses shape ', i, reduction_override, losses['loss_cls_bin{}'.format(i)], losses['loss_cls_bin{}'.format(i)].shape, self.features.shape)
-                #print('Center Loss: ', centerL, centerL.shape)
+
                 
 
         if bbox_pred is not None:

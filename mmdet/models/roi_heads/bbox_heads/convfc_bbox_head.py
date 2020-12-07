@@ -1,8 +1,16 @@
+import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from mmcv.cnn import ConvModule
+from mmcv.runner import auto_fp16, force_fp32
 
 from mmdet.models.builder import HEADS
 from .bbox_head import BBoxHead
+from mmdet.models.losses.cos_loss import CosLoss
+from torch.nn.modules.utils import _pair
+from mmdet.core import build_bbox_coder, multi_apply, multiclass_nms
+from mmdet.models.builder import HEADS, build_loss
+from mmdet.models.losses import accuracy
 
 
 @HEADS.register_module()
@@ -74,9 +82,11 @@ class ConvFCBBoxHead(BBoxHead):
                 self.reg_last_dim *= self.roi_feat_area
         
         self.relu = nn.ReLU(inplace=True)
+        
+        self.loss_cls = CosLoss(self.cls_last_dim, self.num_classes + 1)
         # reconstruct fc_cls and fc_reg since input channels are changed
         if self.with_cls:
-            self.fc_cls = nn.Linear(self.cls_last_dim, self.num_classes + 1)
+            self.fc_cls = self.loss_cls.fc
         if self.with_reg:
             out_dim_reg = (4 if self.reg_class_agnostic else 4 *
                            self.num_classes)
@@ -130,7 +140,7 @@ class ConvFCBBoxHead(BBoxHead):
             for m in module_list.modules():
                 if isinstance(m, nn.Linear):
                     nn.init.xavier_uniform_(m.weight)
-                    nn.init.constant_(m.bias, 0)
+#                     nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         # shared part
@@ -172,6 +182,51 @@ class ConvFCBBoxHead(BBoxHead):
         cls_score = self.fc_cls(x_cls) if self.with_cls else None
         bbox_pred = self.fc_reg(x_reg) if self.with_reg else None
         return cls_score, bbox_pred
+    
+    @force_fp32(apply_to=('cls_score', 'bbox_pred'))
+    def loss(self,
+             cls_score,
+             bbox_pred,
+             rois,
+             labels,
+             label_weights,
+             bbox_targets,
+             bbox_weights,
+             reduction_override=None):
+        losses = dict()
+        if cls_score is not None:
+            avg_factor = max(torch.sum(label_weights > 0).float().item(), 1.)
+            if cls_score.numel() > 0:
+                losses['loss_cls'] = self.loss_cls(
+                    self.features,
+                    labels)
+                losses['acc'] = accuracy(cls_score, labels)
+        if bbox_pred is not None:
+            bg_class_ind = self.num_classes
+            # 0~self.num_classes-1 are FG, self.num_classes is BG
+            pos_inds = (labels >= 0) & (labels < bg_class_ind)
+            # do not perform bounding box regression for BG anymore.
+            if pos_inds.any():
+                if self.reg_decoded_bbox:
+                    bbox_pred = self.bbox_coder.decode(rois[:, 1:], bbox_pred)
+                if self.reg_class_agnostic:
+                    pos_bbox_pred = bbox_pred.view(
+                        bbox_pred.size(0), 4)[pos_inds.type(torch.bool)]
+                else:
+                    pos_bbox_pred = bbox_pred.view(
+                        bbox_pred.size(0), -1,
+                        4)[pos_inds.type(torch.bool),
+                           labels[pos_inds.type(torch.bool)]]
+                losses['loss_bbox'] = self.loss_bbox(
+                    pos_bbox_pred,
+                    bbox_targets[pos_inds.type(torch.bool)],
+                    bbox_weights[pos_inds.type(torch.bool)],
+                    avg_factor=bbox_targets.size(0),
+                    reduction_override=reduction_override)
+            else:
+                losses['loss_bbox'] = bbox_pred[pos_inds].sum()
+        return losses
+
 
 
 @HEADS.register_module()

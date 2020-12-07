@@ -67,7 +67,7 @@ class BBoxHead(nn.Module):
         # conv layers are already initialized by ConvModule
         if self.with_cls:
             nn.init.normal_(self.fc_cls.weight, 0, 0.01)
-            nn.init.constant_(self.fc_cls.bias, 0)
+#             nn.init.constant_(self.fc_cls.bias, 0)
         if self.with_reg:
             nn.init.normal_(self.fc_reg.weight, 0, 0.001)
             nn.init.constant_(self.fc_reg.bias, 0)
@@ -77,9 +77,7 @@ class BBoxHead(nn.Module):
         if self.with_avg_pool:
             x = self.avg_pool(x)
         self.features = x
-        print('Feature shapes before re-shaping: ', x.shape)
         x = x.view(x.size(0), -1)
-        print('Feature shapes after re-shaping: ', x.shape)
         cls_score = self.fc_cls(x) if self.with_cls else None
         bbox_pred = self.fc_reg(x) if self.with_reg else None
         return cls_score, bbox_pred

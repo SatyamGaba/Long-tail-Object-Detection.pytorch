@@ -60,7 +60,7 @@ model = dict(
                 target_stds=[0.1, 0.1, 0.2, 0.2]),
             reg_class_agnostic=False,
             loss_cls=dict(
-                type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
+                type='EuclideanCrossEntropyLoss', use_sigmoid=False, loss_weight=1.0, num_classes = 1204, temperature = 1,),
             loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))))
         
 # model training and testing settings
@@ -192,7 +192,7 @@ log_config = dict(
     ])
 # yapf:enable
 # runtime settings
-total_epochs = 1
+total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
 work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_cos_loss'
