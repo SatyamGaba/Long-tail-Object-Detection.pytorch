@@ -246,8 +246,8 @@ def main():
         meta=meta)
     feat_dir = "features/cos_loss/"
     os.makedirs(feat_dir, exist_ok=True)
-    np.save(os.path.join(feat_dir, f"features_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.features_list))
-    np.save(os.path.join(feat_dir, f"labels_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.labels_list))
+#    np.save(os.path.join(feat_dir, f"features_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.features_list))
+#    np.save(os.path.join(feat_dir, f"labels_{torch.cuda.current_device()}.npy"), np.array(model.roi_head.bbox_head.labels_list))
     
 
 
