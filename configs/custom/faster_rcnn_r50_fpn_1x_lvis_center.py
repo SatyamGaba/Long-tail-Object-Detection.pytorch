@@ -7,7 +7,8 @@ model = dict(
         depth=50,
         num_stages=4,
         out_indices=(0, 1, 2, 3),
-        frozen_stages=1,
+        frozen_stages=4,
+#         norm_cfg=dict(type='BN', requires_grad=False),
         style='pytorch'),
     neck=dict(
         type='FPN',
@@ -38,20 +39,9 @@ model = dict(
             out_channels=256,
             featmap_strides=[4, 8, 16, 32]),
         bbox_head=dict(
-            type='GSBBoxHeadWith0',
+            type='Shared2FCBBoxHead',
             in_channels=256,
             fc_out_channels=1024,
-            gs_config=dict(
-                label2binlabel='./data/lvis_v1/label2binlabel.pt',
-                pred_slice='./data/lvis_v1/pred_slice_with0.pt',
-                fg_split='./data/lvis_v1/valsplit.pkl',
-                others_sample_ratio=8.0,
-                loss_bg=dict(
-                    type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-                num_bins=5,
-                loss_bin=dict(
-                    type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
-                ),          
             roi_feat_size=7,
             num_classes=1203,
             bbox_coder=dict(
@@ -62,7 +52,6 @@ model = dict(
             loss_cls=dict(
                 type='CrossEntropyLoss', use_sigmoid=False, loss_weight=1.0),
             loss_bbox=dict(type='SmoothL1Loss', beta=1.0, loss_weight=1.0))))
-        
 # model training and testing settings
 train_cfg = dict(
     rpn=dict(
@@ -119,6 +108,7 @@ test_cfg = dict(
             min_pos_iou=0.5,
             ignore_iof_thr=-1),
         score_thr=0.0,
+        use_knn=False,
         nms=dict(type='nms', iou_threshold=0.5),
         max_per_img=300)
     # soft-nms is also supported for rcnn testing
@@ -165,7 +155,7 @@ data = dict(
         pipeline=train_pipeline),
     val=dict(
         type=dataset_type,
-        ann_file= ann_root + 'annotations/lvis_v1_val.json',
+        ann_file= ann_root + 'annotations/lvis_v1_val_5cats.json',
         img_prefix=data_root,
         pipeline=test_pipeline),
     test=dict(
@@ -196,10 +186,7 @@ log_config = dict(
 total_epochs = 12
 dist_params = dict(backend='nccl')
 log_level = 'INFO'
-work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_weighted_max'
+work_dir = './work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_center_loss_whole_entire_lambda01'
 load_from = './work_dirs/baseline_epoch_12.pth'
-resume_from = None
+resume_from = None#'./work_dirs/gs_faster_rcnn_r50_fpn_1x_lvis_with0_bg8_center_loss_whole_lambda1/epoch_12.pth'
 workflow = [('train', 1)]
-
-# Train which part, 0 for all, 1 for cls, 2 for bbox_head
-selectp = 1

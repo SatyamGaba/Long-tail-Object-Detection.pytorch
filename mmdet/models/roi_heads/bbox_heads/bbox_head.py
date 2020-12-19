@@ -3,11 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 from mmcv.runner import auto_fp16, force_fp32
 from torch.nn.modules.utils import _pair
+import numpy as np
 
 from mmdet.core import build_bbox_coder, multi_apply, multiclass_nms
 from mmdet.models.builder import HEADS, build_loss
 from mmdet.models.losses import accuracy
-
+from mmdet.models.losses.center_loss import CenterLoss
+from sklearn.neighbors import NearestNeighbors
+from sklearn.metrics import pairwise_distances
 
 @HEADS.register_module()
 class BBoxHead(nn.Module):
@@ -49,7 +52,18 @@ class BBoxHead(nn.Module):
         self.bbox_coder = build_bbox_coder(bbox_coder)
         self.loss_cls = build_loss(loss_cls)
         self.loss_bbox = build_loss(loss_bbox)
-
+        self.loss_center = CenterLoss(1204,1024,use_gpu=True)
+        
+        self.centersX = np.load('./data/lvis_v1/centersX_whole_entire_lambda01.npy')
+        self.centersY = np.load('./data/lvis_v1/centersY_whole_entire_lambda01.npy')
+        
+        NO_OF_CLASSES = 1204
+        FEATURE_DIM = 1024
+        self.runningCenters = np.zeros((NO_OF_CLASSES, FEATURE_DIM))
+        self.runningCentersCount = np.zeros(NO_OF_CLASSES)
+        self.featuresToSave = []
+        self.labelsToSave = []
+        
         in_channels = self.in_channels
         if self.with_avg_pool:
             self.avg_pool = nn.AvgPool2d(self.roi_feat_size)
@@ -151,16 +165,31 @@ class BBoxHead(nn.Module):
              bbox_weights,
              reduction_override=None):
         losses = dict()
+
+        # Keep track of centers
+#         for i,label in enumerate(labels):
+#             self.runningCenters[label.item()] += self.features[i].detach().cpu().numpy()
+#             self.runningCentersCount[label.item()] += 1
+#             if label.item() != 1203:
+#                 features = self.features[i].detach().cpu().numpy()
+#                 self.featuresToSave.append(features)
+#                 self.labelsToSave.append(label.item())
+        #print('Features To Save: ', np.array(self.featuresToSave).shape)
+        #print('Labels To Save: ', np.array(self.labelsToSave).shape)
+        
         if cls_score is not None:
             avg_factor = max(torch.sum(label_weights > 0).float().item(), 1.)
             if cls_score.numel() > 0:
+                lossCenter = self.loss_center(self.features, labels)
                 losses['loss_cls'] = self.loss_cls(
                     cls_score,
                     labels,
                     label_weights,
                     avg_factor=avg_factor,
-                    reduction_override=reduction_override)
+                    reduction_override=reduction_override) + 0.01 * lossCenter
                 losses['acc'] = accuracy(cls_score, labels)
+                losses['center'] = lossCenter
+                #print('Loss center: ', lossCenter)
         if bbox_pred is not None:
             bg_class_ind = self.num_classes
             # 0~self.num_classes-1 are FG, self.num_classes is BG
@@ -198,8 +227,33 @@ class BBoxHead(nn.Module):
                    cfg=None):
         if isinstance(cls_score, list):
             cls_score = sum(cls_score) / float(len(cls_score))
-        scores = F.softmax(cls_score, dim=1) if cls_score is not None else None
 
+        old_scores = F.softmax(cls_score, dim=1) if cls_score is not None else None
+        print('cls_score: ', cls_score.shape)
+        features = self.features.cpu().numpy()
+        #Z = np.append(self.centersX[:30],self.centersX[-1:],axis=0)
+        Z = self.centersX
+#         knn = NearestNeighbors(n_neighbors=30, algorithm='ball_tree').fit(Z)
+#         distances, indices = knn.kneighbors(features)
+        distances = pairwise_distances(features, Z)
+        print('distances: ', distances.shape)
+        
+        n = cls_score.shape[0]      
+        #print('N99 = ', n)
+        scores = torch.ones(n,1204) * -100000
+        scores[:,:1203] = torch.from_numpy(-distances[:,:1203])
+        scores[:,-1] = torch.from_numpy(-distances[:,-1])
+        scores = scores.cuda()
+        scores = F.softmax(scores, dim = 1)
+#         for i in range(n):
+#             scores[i][self.centersY[indices[i][0]]] = 1.0
+        
+        #print('Old scores: ', old_scores, 'thr: ', cfg.score_thr)
+        #print('Scores: ', scores, indices)
+        
+#         if not cfg.use_knn:
+        scores = old_scores 
+            
         if bbox_pred is not None:
             bboxes = self.bbox_coder.decode(
                 rois[:, 1:], bbox_pred, max_shape=img_shape)
@@ -224,6 +278,7 @@ class BBoxHead(nn.Module):
                                                     cfg.score_thr, cfg.nms,
                                                     cfg.max_per_img)
 
+            #print('Det labels: ', det_labels[:10])
             return det_bboxes, det_labels
 
     @force_fp32(apply_to=('bbox_preds', ))

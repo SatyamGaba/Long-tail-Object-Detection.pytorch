@@ -372,6 +372,7 @@ class LVISV05Dataset(CocoDataset):
         cat_ids_copy = self.cat_ids.copy()
         self.cat_ids = list(range(1,1204))
         print('CP 0...')
+        
         result_files = self.results2json(results, jsonfile_prefix)
         print('CP 1...')
         self.cat_ids = cat_ids_copy

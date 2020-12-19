@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from mmcv.parallel import MMDataParallel, MMDistributedDataParallel
 from mmcv.runner import (HOOKS, DistSamplerSeedHook, EpochBasedRunner,
-                         Fp16OptimizerHook, OptimizerHook, obj_from_dict)#, build_optimizer)
+                         Fp16OptimizerHook, OptimizerHook, obj_from_dict, build_optimizer)
 from mmcv.utils import build_from_cfg
 
 from mmdet.core import DistEvalHook, EvalHook
@@ -31,91 +31,6 @@ def set_random_seed(seed, deterministic=False):
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-def build_optimizer(model, optimizer_cfg):
-    """Build optimizer from configs.
-
-    Args:
-        model (:obj:`nn.Module`): The model with parameters to be optimized.
-        optimizer_cfg (dict): The config dict of the optimizer.
-            Positional fields are:
-                - type: class name of the optimizer.
-                - lr: base learning rate.
-            Optional fields are:
-                - any arguments of the corresponding optimizer type, e.g.,
-                  weight_decay, momentum, etc.
-                - paramwise_options: a dict with 3 accepted fileds
-                  (bias_lr_mult, bias_decay_mult, norm_decay_mult).
-                  `bias_lr_mult` and `bias_decay_mult` will be multiplied to
-                  the lr and weight decay respectively for all bias parameters
-                  (except for the normalization layers), and
-                  `norm_decay_mult` will be multiplied to the weight decay
-                  for all weight and bias parameters of normalization layers.
-
-    Returns:
-        torch.optim.Optimizer: The initialized optimizer.
-
-    Example:
-        >>> model = torch.nn.modules.Conv1d(1, 1, 1)
-        >>> optimizer_cfg = dict(type='SGD', lr=0.01, momentum=0.9,
-        >>>                      weight_decay=0.0001)
-        >>> optimizer = build_optimizer(model, optimizer_cfg)
-    """
-    if hasattr(model, 'module'):
-        model = model.module
-
-    optimizer_cfg = optimizer_cfg.copy()
-    paramwise_options = optimizer_cfg.pop('paramwise_options', None)
-    # if no paramwise option is specified, just use the global setting
-    if paramwise_options is None:
-        return obj_from_dict(optimizer_cfg, torch.optim,
-                             dict(params=filter(lambda p: p.requires_grad, model.parameters())))
-    else:
-        assert isinstance(paramwise_options, dict)
-        # get base lr and weight decay
-        base_lr = optimizer_cfg['lr']
-        base_wd = optimizer_cfg.get('weight_decay', None)
-        # weight_decay must be explicitly specified if mult is specified
-        if ('bias_decay_mult' in paramwise_options
-                or 'norm_decay_mult' in paramwise_options):
-            assert base_wd is not None
-        # get param-wise options
-        bias_lr_mult = paramwise_options.get('bias_lr_mult', 1.)
-        bias_decay_mult = paramwise_options.get('bias_decay_mult', 1.)
-        norm_decay_mult = paramwise_options.get('norm_decay_mult', 1.)
-        # set param-wise lr and weight decay
-        params = []
-        for name, param in model.named_parameters():
-            param_group = {'params': [param]}
-            if not param.requires_grad:
-                # FP16 training needs to copy gradient/weight between master
-                # weight copy and model weight, it is convenient to keep all
-                # parameters here to align with model.parameters()
-                params.append(param_group)
-                continue
-
-            # for norm layers, overwrite the weight decay of weight and bias
-            # TODO: obtain the norm layer prefixes dynamically
-            if re.search(r'(bn|gn)(\d+)?.(weight|bias)', name):
-                if base_wd is not None:
-                    param_group['weight_decay'] = base_wd * norm_decay_mult
-            # for other layers, overwrite both lr and weight decay of bias
-            elif name.endswith('.bias'):
-                param_group['lr'] = base_lr * bias_lr_mult
-                if base_wd is not None:
-                    param_group['weight_decay'] = base_wd * bias_decay_mult
-            # otherwise use the global settings
-
-            params.append(param_group)
-
-        # Add center loss parameters to the list
-        for loss_center_bin in model.roi_head.bbox_head.loss_center_bins:
-            param_group = {'params': [loss_center_bin.parameters()]}
-            params.append(param_group)
-
-        optimizer_cls = getattr(torch.optim, optimizer_cfg.pop('type'))
-        return optimizer_cls(params, **optimizer_cfg)
-
-
 def train_detector(model,
                    dataset,
                    cfg,
@@ -123,9 +38,6 @@ def train_detector(model,
                    validate=False,
                    timestamp=None,
                    meta=None):
-    print('Inside train detector...')
-    print(model.roi_head.bbox_head.loss_center_bins[0].parameters())
-    print('Done printing...')
     logger = get_root_logger(cfg.log_level)
 
     # prepare data loaders
@@ -170,6 +82,11 @@ def train_detector(model,
             model.cuda(cfg.gpu_ids[0]), device_ids=cfg.gpu_ids)
 
     # build runner
+    
+#     for name, param in model.named_parameters():
+#         if param.requires_grad:
+#                 print(name)
+    
     optimizer = build_optimizer(model, cfg.optimizer)
     runner = EpochBasedRunner(
         model,
@@ -234,4 +151,13 @@ def train_detector(model,
         runner.resume(cfg.resume_from)
     elif cfg.load_from:
         runner.load_checkpoint(cfg.load_from)
+    print(model.module.roi_head.bbox_head.runningCenters, model.module.roi_head.bbox_head.runningCenters.shape)
     runner.run(data_loaders, cfg.workflow, cfg.total_epochs)
+    print(model.module.roi_head.bbox_head.runningCenters, model.module.roi_head.bbox_head.runningCenters.shape)
+    np.save('./data/lvis_v1/runningCenters.npy', model.module.roi_head.bbox_head.runningCenters)
+    np.save('./data/lvis_v1/runningCentersCount.npy', model.module.roi_head.bbox_head.runningCentersCount)
+    np.save('./data/lvis_v1/featuresToSave.npy', model.module.roi_head.bbox_head.featuresToSave)
+    print('Labels to save...')
+    np.save('./data/lvis_v1/labelsToSave.npy', model.module.roi_head.bbox_head.labelsToSave)
+    print('Labels saved...')
+    

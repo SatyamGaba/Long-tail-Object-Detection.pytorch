@@ -10,6 +10,7 @@ from mmdet.core import multiclass_nms
 from mmdet.models.builder import HEADS, build_loss
 from .convfc_bbox_head import Shared2FCBBoxHead
 from mmdet.models.losses.center_loss import CenterLoss
+from sklearn.neighbors import NearestNeighbors
 
 @HEADS.register_module()
 class GSBBoxHeadWith0(Shared2FCBBoxHead):
@@ -28,7 +29,9 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                                 self.num_classes + gs_config.num_bins + 1)
 
         # self.loss_bg = build_loss(gs_config.loss_bg)
-
+        self.centersX = np.load('./data/lvis_v1/centersX.npy')
+        self.centersY = np.load('./data/lvis_v1/centersY.npy')
+        
         self.pred_slice = torch.load(gs_config.pred_slice).cuda()
         num_bins = self.pred_slice.shape[0]
         self.bin_sizes = []
@@ -120,7 +123,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                 weight = torch.ones_like(new_bin_label)
                 # weight = torch.zeros_like(new_bin_label)
             else:
-                weight = self._sample_others(new_bin_label,i,weighted=False)
+                weight = self._sample_others(new_bin_label,i,weighted=(i<3))
             new_labels.append(new_bin_label)
             new_weights.append(weight)
             avg_factor = max(torch.sum(weight).float().item(), 1.)
@@ -192,7 +195,7 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                     avg_factor=new_avgfactors[i],
                     reduction_override=reduction_override
                 )
-                losses['loss_cls_bin{}'.format(i)] += 0.01 * self.loss_center_bins[i](self.features, new_labels[i])
+                #losses['loss_cls_bin{}'.format(i)] += 0.0001  * self.loss_center_bins[i](self.features, new_labels[i])
                 #print(self.features.shape, new_labels[i].shape, self.bin_sizes[i])
                 #centerL = self.loss_center_bins[i](self.features, new_labels[i])
                 #print('Loss: ', centerL, losses['loss_cls_bin{}'.format(i)])
@@ -422,8 +425,28 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                        cfg=None):
         if isinstance(cls_score, list):
             cls_score = sum(cls_score) / float(len(cls_score))
-
-        scores = self._merge_score(cls_score)
+        #print('Inside get_bboxes: ', self.features.shape, cls_score.shape)
+        
+#         features = self.features.cpu().numpy()
+#         print('features: ', features[0])
+#         knn = NearestNeighbors(n_neighbors=1, algorithm='ball_tree').fit(self.centersX)
+#         distances, indices = knn.kneighbors(features)
+        
+#         n = cls_score.shape[0]
+#         #print('N = ', n)
+#         scores = torch.zeros(n,1204).cuda()
+#         for i in range(n):
+#             if i < 5:
+#                 #print('i = 0', indices[i][0])
+#                 pass
+#             scores[i][self.centersY[indices[i][0]]] = 1.0
+   
+        old_scores = self._merge_score(cls_score)
+#         print(torch.argmax(old_scores,dim=1)[:10])
+#         print(indices[:10])
+        scores = old_scores
+        
+        #print('Scores: ', scores.shape, cfg.score_thr)
         #print('SCORE LENGTHS: ',len(cls_score[0]), len(scores[0]))
         # scores = F.softmax(cls_score, dim=1) if cls_score is not None else None
 
@@ -450,3 +473,5 @@ class GSBBoxHeadWith0(Shared2FCBBoxHead):
                                                     cfg.score_thr, cfg.nms,
                                                     cfg.max_per_img)
             return det_bboxes, det_labels
+
+        
